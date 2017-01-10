@@ -14,7 +14,7 @@ import random
 import re
 import sys
 
-__version__    = '0.1.3'
+__version__    = '0.2.0'
 CONFIG_FILE    = 'config.json'
 EMOTES_FILE    = 'emotes.json'
 COMMANDS_FILE  = 'commands.json'
@@ -23,6 +23,7 @@ client         = None
 commands       = None
 config         = None
 emotes         = None
+server_emoji   = None
 logger         = None
 
 ### INITIALIZATION ###
@@ -110,6 +111,10 @@ async def add_emote(message, argstr):
         return
 
     emote = emote.casefold()
+    if emote == 'everyone':
+        await client.send_message(message.channel, 'That name is reserved.')
+        return
+
     regex = re.compile(
         r'^(?:http|ftp)s?://'
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'
@@ -133,13 +138,17 @@ async def add_emote(message, argstr):
     else:
         emotes[emote] = url
         save_emotes()
-        await client.send_message(message.channel, 'Added emote!')
+        await client.send_message(
+            message.channel,
+            'Added emote! ' + str(server_emoji['pride'])
+        )
+
 
 async def remove_emote(message, argstr):
     if argstr is None:
         await client.send_message(
             message.channel,
-            "I can't delete nothing, {}.".format(random_insult())
+            "I can't delete nothing, {}. :tsun:".format(random_insult())
         )
         return
 
@@ -149,7 +158,7 @@ async def remove_emote(message, argstr):
         save_emotes()
         await client.send_message(
             message.channel,
-            "Deleted emote!"
+            'Deleted emote! ' + str(server_emoji["pride"])
         )
     else:
         await client.send_message(
@@ -193,6 +202,29 @@ commands = {
 @client.event
 async def on_ready():
     logger.info('Bot is ready')
+    server = client.get_server(config['greetings_server'])
+    logger.info(
+        "Logged into server {}, default channel is {}"
+        .format(server, server.default_channel)
+    )
+    if server is not None:
+        server_emoji = {}
+        for emoji in client.get_all_emojis():
+            server_emoji[emoji.name] = emoji
+        logger.info('Got {} emoji in this server'.format(len(server_emoji)))
+        if 'pride' in server_emoji:
+            await client.send_message(
+                server.default_channel,
+                str(server_emoji['pride'])
+            )
+        else:
+            await client.send_message(
+                server.default_channel,
+                'DragonBot has arrived!'
+            )
+    else:
+        logger.warning("Couldn't find server")
+
 
 @client.event
 async def on_message(message):
@@ -212,7 +244,9 @@ async def on_message(message):
     elif message.content.startswith('@'):
         logger.info('Handling emote message "' + message.content + '"')
         emote = message.content[1:]
-        if emote in emotes:
+        if emote == 'everyone':
+            pass
+        elif emote in emotes:
             await client.send_message(message.channel, emotes[emote])
         else:
             await client.send_message("I don't know that emote.")
