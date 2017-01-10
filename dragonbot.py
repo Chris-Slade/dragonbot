@@ -243,6 +243,15 @@ async def help(message, argstr):
 ```'''.format(version())
     )
 
+async def test(message, argstr):
+    if message.author.id != config['owner_id']:
+        await client.send_message(
+            message.channel,
+            'Go away, this is for {}.'.format(config['owner_name'])
+        )
+    else:
+        pass
+
 ### EVENT HANDLERS ###
 
 @client.event
