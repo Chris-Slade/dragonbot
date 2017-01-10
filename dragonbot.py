@@ -14,7 +14,7 @@ import random
 import re
 import sys
 
-__version__    = '0.2.0'
+__version__    = '0.2.1'
 CONFIG_FILE    = 'config.json'
 EMOTES_FILE    = 'emotes.json'
 COMMANDS_FILE  = 'commands.json'
@@ -56,14 +56,6 @@ logger.info('DragonBot v{} (discord.py v{})'.format(
         discord.__version__
     )
 )
-
-# Add client cleanup hook
-def cleanup():
-    print('Logging out')
-    if client.is_logged_in:
-        client.logout()
-
-atexit.register(cleanup)
 
 # Add emote-saving hook
 def save_emotes():
