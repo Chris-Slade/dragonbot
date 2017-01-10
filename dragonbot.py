@@ -15,7 +15,7 @@ import random
 import re
 import sys
 
-__version__    = '0.4.0'
+__version__    = '0.4.1'
 
 ### ARGUMENTS ###
 
@@ -237,7 +237,7 @@ async def help(message, argstr):
         deleteemote : Alias for `removeemote`.
         emotes      : Show a list of known emotes.
         help        : Show this help message.
-        insult      : Insult someone.
+        insult      : Insult someone. (Not implemented yet.)
         removeemote : Remove an emote.
         truth       : Tell the truth.
 ```'''.format(version())
