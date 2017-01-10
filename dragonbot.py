@@ -158,10 +158,15 @@ async def truth(message, argstr):
     await client.send_message(message.channel, 'slushrfggts')
 
 async def help(message, argstr):
-    await client.send_message('''```
+    await client.send_message(
+        message.channel,
+'''```
 DragonBot v{} (discord.py v{})
     Commands:
-        addemote    : Adds an emote, e.g. `!addemote example http://example.com/emote.png`, which can then be used as `@emote`.
+        addemote    : Adds an emote. For example:
+            `!addemote example http://example.com/emote.png`
+            will allow you to use `@example` to have the corresponding URL
+            posted by the bot.
         deleteemote : Alias for `removeemote`.
         emotes      : Show a list of known emotes.
         help        : Show this help message.
