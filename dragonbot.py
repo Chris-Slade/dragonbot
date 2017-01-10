@@ -229,17 +229,18 @@ async def help(message, argstr):
         message.channel,
 '''```
 {}
-    Commands:
-        addemote    : Adds an emote. For example:
-            `!addemote example http://example.com/emote.png`
-            will allow you to use `@example` to have the corresponding URL
-            posted by the bot.
-        deleteemote : Alias for `removeemote`.
-        emotes      : Show a list of known emotes.
-        help        : Show this help message.
-        insult      : Insult someone. (Not implemented yet.)
-        removeemote : Remove an emote.
-        truth       : Tell the truth.
+Commands:
+    addemote    : Adds an emote. For example:
+        `!addemote example http://example.com/emote.png`
+        will allow you to use `@example` to have the corresponding URL
+        posted by the bot.
+    deleteemote : Alias for `removeemote`.
+    emotes      : Show a list of known emotes.
+    help        : Show this help message.
+    insult      : Insult someone. (Not implemented yet.)
+    removeemote : Remove an emote.
+    test        : For testing and debugging. For the bot owner's use only.
+    truth       : Tell the truth.
 ```'''.format(version())
     )
 
