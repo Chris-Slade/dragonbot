@@ -4,6 +4,7 @@ from __future__ import (
     unicode_literals,
     division
 )
+import argparse
 import asyncio
 import atexit
 import discord
@@ -14,35 +15,74 @@ import random
 import re
 import sys
 
-__version__    = '0.3.0'
-CONFIG_FILE    = 'config.json'
-EMOTES_FILE    = 'emotes.json'
-COMMANDS_FILE  = 'commands.json'
-SAVE_DELAY     = 5 * 60
+__version__    = '0.4.0'
+
+### ARGUMENTS ###
+
+def getopts():
+    defaults = {
+        'config' : 'config.json',
+        'emotes' : 'emotes.json',
+    }
+    parser = argparse.ArgumentParser(description='Discord chat bot')
+    parser.set_defaults(**defaults)
+    parser.add_argument(
+        '-l', '--log',
+        type=str,
+        help='The logging level.'
+    )
+    parser.add_argument(
+        '-c', '--config',
+        type=str,
+        help='Configuration file to use.'
+    )
+    parser.add_argument(
+        '-e', '--emotes',
+        type=str,
+        help='Emotes file to use.'
+    )
+    opts = parser.parse_args()
+    try:
+        log_level = getattr(logging, opts.log)
+        if type(log_level) != int:
+            raise AttributeError
+        opts.log_level = log_level
+    except AttributeError:
+        print('Unknown log level, defaulting to INFO')
+        opts.log_level = logging.INFO
+    return opts
+
+### INITIALIZATION ###
+
 client         = None
 commands       = None
 config         = None
 emotes         = None
-server_emoji   = None
 logger         = None
+opts           = None
+server_emoji   = None
 
-### INITIALIZATION ###
+# Get options
+opts = getopts()
 
 # Initialize logger
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=opts.log_level,
+    format='%(asctime)-15s %(levelname)s %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Initialize config
 logger.info('Loading config')
-with open(CONFIG_FILE, 'r', encoding='utf-8') as fh:
+with open(opts.config, 'r', encoding='utf-8') as fh:
     config = json.load(fh)
 
 # Initialize emotes
 if 'emotes_file' not in config:
-    config['emotes_file'] = EMOTES_FILE
+    config['emotes_file'] = opts.emotes
 if not os.path.isfile(config['emotes_file']):
     logger.info('Creating new emotes file')
-    with open(EMOTES_FILE, 'x') as fh:
+    with open(opts.emotes, 'x') as fh:
         fh.writelines(["{}"])
 with open(config['emotes_file'], 'r', encoding='utf-8') as fh:
     emotes = json.load(fh)
@@ -130,9 +170,13 @@ async def add_emote(message, argstr):
     else:
         emotes[emote] = url
         save_emotes()
+        if type(server_emoji) != dict:
+            logger.warning('Expected server_emoji to be initialized')
+        emoji = server_emoji['pride']
         await client.send_message(
             message.channel,
-            'Added emote! ' + str(server_emoji['pride'])
+            'Added emote! ' + str(emoji) if emoji is not None
+            else 'Added emote!'
         )
 
 
@@ -148,9 +192,13 @@ async def remove_emote(message, argstr):
     if emote in emotes:
         del emotes[emote]
         save_emotes()
+        if type(server_emoji) != dict:
+            logger.warning('Expected server_emoji to be initialized')
+        emoji = server_emotes['pride']
         await client.send_message(
             message.channel,
-            'Deleted emote! ' + str(server_emoji["pride"])
+            'Deleted emote! ' + str(emoji) if emoji is not None
+            else 'Deleted emote!'
         )
     else:
         await client.send_message(
@@ -204,6 +252,7 @@ async def on_ready():
         for emoji in client.get_all_emojis():
             server_emoji[emoji.name] = emoji
         logger.info('Got {} emoji in this server'.format(len(server_emoji)))
+        logger.debug(', '.join(server_emoji.keys()))
         if 'pride' in server_emoji:
             await client.send_message(
                 server.default_channel,
