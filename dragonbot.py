@@ -14,7 +14,7 @@ import random
 import re
 import sys
 
-__version__    = '0.2.1'
+__version__    = '0.3.0'
 CONFIG_FILE    = 'config.json'
 EMOTES_FILE    = 'emotes.json'
 COMMANDS_FILE  = 'commands.json'
@@ -51,12 +51,6 @@ with open(config['emotes_file'], 'r', encoding='utf-8') as fh:
 loop = asyncio.get_event_loop()
 client = discord.Client(loop=loop)
 
-logger.info('DragonBot v{} (discord.py v{})'.format(
-        __version__,
-        discord.__version__
-    )
-)
-
 # Add emote-saving hook
 def save_emotes():
     logger.info('Saving emotes')
@@ -66,6 +60,12 @@ def save_emotes():
 atexit.register(save_emotes)
 
 ### UTILITY FUNCTIONS ###
+
+def version():
+    return 'DragonBot v{} (discord.py v{})'.format(
+        __version__,
+        discord.__version__
+    )
 
 def random_insult():
     insults = [
@@ -165,7 +165,7 @@ async def help(message, argstr):
     await client.send_message(
         message.channel,
 '''```
-DragonBot v{} (discord.py v{})
+{}
     Commands:
         addemote    : Adds an emote. For example:
             `!addemote example http://example.com/emote.png`
@@ -177,7 +177,7 @@ DragonBot v{} (discord.py v{})
         insult      : Insult someone.
         removeemote : Remove an emote.
         truth       : Tell the truth.
-```'''.format(__version__, discord.__version__)
+```'''.format(version())
     )
 
 commands = {
@@ -207,7 +207,7 @@ async def on_ready():
         if 'pride' in server_emoji:
             await client.send_message(
                 server.default_channel,
-                str(server_emoji['pride'])
+                "{} {}".format(version(), str(server_emoji['pride']))
             )
         else:
             await client.send_message(
@@ -244,6 +244,8 @@ async def on_message(message):
             await client.send_message("I don't know that emote.")
 
 ### RUN ###
+
+logger.info(version())
 
 try:
     client.run(config['credentials']['token'])
