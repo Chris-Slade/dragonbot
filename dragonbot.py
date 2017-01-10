@@ -23,6 +23,7 @@ def getopts():
     defaults = {
         'config' : 'config.json',
         'emotes' : 'emotes.json',
+        'log'    : 'INFO',
     }
     parser = argparse.ArgumentParser(description='Discord chat bot')
     parser.set_defaults(**defaults)
@@ -54,52 +55,66 @@ def getopts():
 
 ### INITIALIZATION ###
 
-client         = None
-commands       = None
-config         = None
-emotes         = None
-logger         = None
-opts           = None
-server_emoji   = None
-
-# Get options
-opts = getopts()
-
-# Initialize logger
-logging.basicConfig(
-    level=opts.log_level,
-    format='%(asctime)-15s %(levelname)s %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-# Initialize config
-logger.info('Loading config')
-with open(opts.config, 'r', encoding='utf-8') as fh:
-    config = json.load(fh)
-
-# Initialize emotes
-if 'emotes_file' not in config:
-    config['emotes_file'] = opts.emotes
-if not os.path.isfile(config['emotes_file']):
-    logger.info('Creating new emotes file')
-    with open(opts.emotes, 'x') as fh:
-        fh.writelines(["{}"])
-with open(config['emotes_file'], 'r', encoding='utf-8') as fh:
-    emotes = json.load(fh)
-
-### MAIN ###
-loop = asyncio.get_event_loop()
+loop   = asyncio.get_event_loop()
 client = discord.Client(loop=loop)
 
-# Add emote-saving hook
+def init():
+    global client, commands, config, emotes, logger, opts, server_emoji
+
+    # Get options
+    opts = getopts()
+
+    # Initialize logger
+    logging.basicConfig(
+        level=opts.log_level,
+        format='%(asctime)-15s %(levelname)s %(message)s'
+    )
+    logger = logging.getLogger(__name__)
+
+    # Initialize config
+    logger.info('Loading config')
+    with open(opts.config, 'r', encoding='utf-8') as fh:
+        config = json.load(fh)
+
+    # Initialize emotes
+    if 'emotes_file' not in config:
+        config['emotes_file'] = opts.emotes
+    if not os.path.isfile(config['emotes_file']):
+        logger.info('Creating new emotes file')
+        with open(opts.emotes, 'x') as fh:
+            fh.writelines(["{}"])
+    with open(config['emotes_file'], 'r', encoding='utf-8') as fh:
+        emotes = json.load(fh)
+
+    # Add emote-saving hook
+    atexit.register(save_emotes)
+
+    commands = {
+        "addemote"    : add_emote,
+        "deleteemote" : remove_emote,
+        "emotes"      : list_emotes,
+        "help"        : help,
+        "removeemote" : remove_emote,
+        "truth"       : truth,
+    }
+
+    logger.info('Finished initializing')
+
+def main():
+    init()
+    logger.info(version())
+    try:
+        client.run(config['credentials']['token'])
+    except Exception as e:
+        logging.error("Caught exception", exc_info=full_exc_info())
+        sys.exit(1)
+
+### UTILITY FUNCTIONS ###
+
 def save_emotes():
     logger.info('Saving emotes')
     with open(config['emotes_file'], 'w') as fh:
         json.dump(emotes, fh, indent=4, separators = (',', ' : '))
-
-atexit.register(save_emotes)
-
-### UTILITY FUNCTIONS ###
 
 def version():
     return 'DragonBot v{} (discord.py v{})'.format(
@@ -228,15 +243,6 @@ async def help(message, argstr):
 ```'''.format(version())
     )
 
-commands = {
-    "addemote"    : add_emote,
-    "deleteemote" : remove_emote,
-    "emotes"      : list_emotes,
-    "help"        : help,
-    "removeemote" : remove_emote,
-    "truth"       : truth,
-}
-
 ### EVENT HANDLERS ###
 
 @client.event
@@ -294,10 +300,5 @@ async def on_message(message):
 
 ### RUN ###
 
-logger.info(version())
-
-try:
-    client.run(config['credentials']['token'])
-except Exception as e:
-    logging.error("Caught exception", exc_info=full_exc_info())
-    sys.exit(1)
+if __name__ == "__main__":
+    main()
