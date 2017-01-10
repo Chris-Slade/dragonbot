@@ -7,6 +7,7 @@ from __future__ import (
 import argparse
 import asyncio
 import atexit
+import collections
 import discord
 import json
 import logging
@@ -14,8 +15,9 @@ import os
 import random
 import re
 import sys
+import time
 
-__version__    = '0.4.1'
+__version__    = '0.5.0'
 
 ### ARGUMENTS ###
 
@@ -59,7 +61,7 @@ loop   = asyncio.get_event_loop()
 client = discord.Client(loop=loop)
 
 def init():
-    global client, commands, config, emotes, logger, opts, server_emoji
+    global client, commands, config, emotes, logger, opts, server_emoji, stats
 
     # Get options
     opts = getopts()
@@ -94,15 +96,20 @@ def init():
         "deleteemote" : remove_emote,
         "emotes"      : list_emotes,
         "help"        : help,
+        "stats"       : show_stats,
         "removeemote" : remove_emote,
+        "test"        : test,
         "truth"       : truth,
     }
+
+    stats = collections.defaultdict(int)
 
     logger.info('Finished initializing')
 
 def main():
     init()
     logger.info(version())
+    stats['start time'] = time.time()
     try:
         client.run(config['credentials']['token'])
     except Exception as e:
@@ -126,6 +133,7 @@ def random_insult():
     insults = [
         '<insults go here>'
     ]
+    stats['insults picked'] += 1
     return random.choice(insults)
 
 def chunker(seq, size):
@@ -185,6 +193,7 @@ async def add_emote(message, argstr):
     else:
         emotes[emote] = url
         save_emotes()
+        stats['emotes added'] += 1
         if type(server_emoji) != dict:
             logger.warning('Expected server_emoji to be initialized')
         emoji = server_emoji['pride']
@@ -207,9 +216,10 @@ async def remove_emote(message, argstr):
     if emote in emotes:
         del emotes[emote]
         save_emotes()
+        stats['emotes deleted'] += 1
         if type(server_emoji) != dict:
             logger.warning('Expected server_emoji to be initialized')
-        emoji = server_emotes['pride']
+        emoji = server_emoji['pride']
         await client.send_message(
             message.channel,
             'Deleted emote! ' + str(emoji) if emoji is not None
@@ -238,6 +248,7 @@ Commands:
     emotes      : Show a list of known emotes.
     help        : Show this help message.
     insult      : Insult someone. (Not implemented yet.)
+    stats       : Show bot statistics.
     removeemote : Remove an emote.
     test        : For testing and debugging. For the bot owner's use only.
     truth       : Tell the truth.
@@ -253,11 +264,36 @@ async def test(message, argstr):
     else:
         pass
 
+async def show_stats(message, argstr):
+    stat_message = """```
+Session statistics:
+    Uptime:             {:6f}s
+    Time to connect:    {:6f}s
+    Emotes known:       {}
+    Emotes added:       {}
+    Emotes removed:     {}
+    Messages processed: {}
+    Commands called:    {}
+    Emotes used:        {}
+```""".format(
+        time.time() - stats['start time'],
+        stats['connect time'],
+        len(emotes.keys()),
+        stats['emotes added'],
+        stats['emotes deleted'],
+        stats['messages'],
+        stats['commands'],
+        stats['emotes'],
+    )
+    await client.send_message(message.channel, stat_message)
+
+
 ### EVENT HANDLERS ###
 
 @client.event
 async def on_ready():
     logger.info('Bot is ready')
+    stats['connect time'] = time.time() - stats['start time']
     server = client.get_server(config['greetings_server'])
     logger.info(
         "Logged into server {}, default channel is {}"
@@ -285,6 +321,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    stats['messages'] += 1
     if message.content.startswith('!'):
         logger.info('Handling command message "' + message.content + '"')
         split = message.content[1:].split(maxsplit=1)
@@ -295,6 +332,7 @@ async def on_message(message):
             logger.warning('Mishandled command message: "{}"'.format(message.content))
 
         if command in commands:
+            stats['commands'] += 1
             await commands[command](message, argstr)
         else:
             logger.info('Ignoring unknown command "{}"'.format(command))
@@ -304,6 +342,7 @@ async def on_message(message):
         if emote == 'everyone':
             pass
         elif emote in emotes:
+            stats['emotes'] += 1
             await client.send_message(message.channel, emotes[emote])
         else:
             await client.send_message("I don't know that emote.")
