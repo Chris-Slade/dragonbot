@@ -14,7 +14,7 @@ import random
 import re
 import sys
 
-__version__    = '0.1.1'
+__version__    = '0.1.3'
 CONFIG_FILE    = 'config.json'
 EMOTES_FILE    = 'emotes.json'
 COMMANDS_FILE  = 'commands.json'
@@ -101,7 +101,7 @@ async def add_emote(message, argstr):
     try:
         if argstr is None:
             raise ValueError('No arguments')
-        emote, url = argstr.split(maxsplit=1)
+        emote, url = argstr.rsplit(maxsplit=1)
     except ValueError as e:
         await client.send_message(
             message.channel,
