@@ -24,7 +24,6 @@ commands       = None
 config         = None
 emotes         = None
 logger         = None
-emotes_changed = False
 
 ### INITIALIZATION ###
 
@@ -66,17 +65,12 @@ def cleanup():
 atexit.register(cleanup)
 
 # Add emote-saving hook
-def save_emotes(loop=None):
-    if emotes_changed:
-        logger.info('Saving emotes')
-        with open(config['emotes_file'], 'w') as fh:
-            json.dump(emotes, fh, indent=4, separators = (',', ' : '))
-        emotes_changed = False
-    if loop is not None:
-        loop.call_later(SAVE_DELAY, save_emotes, loop)
+def save_emotes():
+    logger.info('Saving emotes')
+    with open(config['emotes_file'], 'w') as fh:
+        json.dump(emotes, fh, indent=4, separators = (',', ' : '))
 
 atexit.register(save_emotes)
-loop.call_soon(save_emotes, loop)
 
 ### UTILITY FUNCTIONS ###
 
@@ -138,7 +132,7 @@ async def add_emote(message, argstr):
         )
     else:
         emotes[emote] = url
-        emotes_changd = True
+        save_emotes()
         await client.send_message(message.channel, 'Added emote!')
 
 async def remove_emote(message, argstr):
@@ -151,8 +145,8 @@ async def remove_emote(message, argstr):
 
     emote = argstr.casefold()
     if emote in emotes:
-        emotes_changed = True
         del emotes[emote]
+        save_emotes()
         await client.send_message(
             message.channel,
             "Deleted emote!"
