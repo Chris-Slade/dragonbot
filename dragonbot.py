@@ -96,7 +96,7 @@ async def list_emotes(message, argstr):
         )
         return
 
-    emote_list = ", ".join(emotes)
+    emote_list = ", ".join(sorted(emotes))
     for chunk in chunker(emote_list, 2000):
         await client.send_message(message.channel, chunk)
 
