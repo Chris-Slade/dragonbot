@@ -17,7 +17,7 @@ import re
 import sys
 import time
 
-__version__    = '0.8.0'
+__version__    = '0.8.1'
 
 ### ARGUMENTS ###
 
@@ -151,6 +151,9 @@ def random_insult():
 def chunker(seq, size):
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
+def notNone(value, default):
+    return value if value is not None else default
+
 ### COMMANDS ###
 
 async def list_emotes(message, argstr):
@@ -206,21 +209,20 @@ async def add_emote(message, argstr):
         emotes[emote] = url
         save_emotes()
         stats['emotes added'] += 1
-        if type(server_emoji) != dict:
-            logger.warning('Expected server_emoji to be initialized')
-        emoji = server_emoji['pride']
         await client.send_message(
             message.channel,
-            'Added emote! ' + str(emoji) if emoji is not None
-            else 'Added emote!'
+            'Added emote! ' + str(server_emoji['pride'])
+                if 'pride' in server_emoji else 'Added emote!'
         )
-
 
 async def remove_emote(message, argstr):
     if argstr is None:
         await client.send_message(
             message.channel,
-            "I can't delete nothing, {}. :tsun:".format(random_insult())
+            "I can't delete nothing, {}. {}".format(
+                random_insult(),
+                str(server_emoji['tsun']) if 'tsun' in server_emoji else ''
+            )
         )
         return
 
@@ -229,18 +231,18 @@ async def remove_emote(message, argstr):
         del emotes[emote]
         save_emotes()
         stats['emotes deleted'] += 1
-        if type(server_emoji) != dict:
-            logger.warning('Expected server_emoji to be initialized')
-        emoji = server_emoji['pride']
         await client.send_message(
             message.channel,
-            'Deleted emote! ' + str(emoji) if emoji is not None
-            else 'Deleted emote!'
+            'Deleted emote! ' + str(server_emoji['pride'])
+                if 'pride' in server_emoji else 'Deleted emote!'
         )
     else:
         await client.send_message(
             message.channel,
-            "That emote isn't stored, {}.".format(random_insult())
+            "That emote isn't stored, {}. {}".format(
+                random_insult(),
+                str(server_emoji['tsun']) if 'tsun' in server_emoji else ''
+            )
         )
 
 async def truth(message, argstr):
@@ -322,6 +324,7 @@ async def say(message, argstr):
 
 @client.event
 async def on_ready():
+    global server_emoji
     logger.info('Bot is ready')
     stats['connect time'] = time.time() - stats['start time']
     server = client.get_server(config['greetings_server'])
@@ -338,16 +341,13 @@ async def on_ready():
         logger.debug(', '.join(server_emoji.keys()))
         # Post a greeting
         if opts.greet:
-            if 'pride' in server_emoji:
-                await client.send_message(
-                    server.default_channel,
-                    "{} {}".format(version(), str(server_emoji['pride']))
+            await client.send_message(
+                server.default_channel,
+                "{} {}".format(
+                    version(),
+                    server_emoji['pride'] if 'pride' in server_emoji else ''
                 )
-            else:
-                await client.send_message(
-                    server.default_channel,
-                    'DragonBot has arrived!'
-                )
+            )
     else:
         logger.warning("Couldn't find server")
     # Print list of servers and channels
