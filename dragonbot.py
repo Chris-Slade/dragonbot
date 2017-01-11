@@ -17,16 +17,17 @@ import re
 import sys
 import time
 
-__version__    = '0.8.3'
+__version__    = '0.8.4'
 
 ### ARGUMENTS ###
 
 def getopts():
     defaults = {
-        'config' : 'config.json',
-        'emotes' : 'emotes.json',
-        'log'    : 'INFO',
-        'greet'  : True,
+        'config'    : 'config.json',
+        'emotes'    : 'emotes.json',
+        'greet'     : True,
+        'log'       : 'INFO',
+        'ro-emotes' : False,
     }
     parser = argparse.ArgumentParser(description='Discord chat bot')
     parser.set_defaults(**defaults)
@@ -54,6 +55,10 @@ def getopts():
         '--no-greet',
         dest='greet',
         action='store_false'
+    )
+    parser.add_argument(
+        '--read-only',
+        action='store_true'
     )
     opts = parser.parse_args()
     try:
@@ -132,6 +137,9 @@ def main():
 
 def save_emotes():
     logger.info('Saving emotes')
+    if opts.read_only:
+        logger.info('No save done, read-only enabled')
+        return
     with open(config['emotes_file'], 'w') as fh:
         json.dump(emotes, fh, indent=4, separators = (',', ' : '))
 
@@ -169,6 +177,13 @@ async def list_emotes(message, argstr):
         await client.send_message(message.channel, chunk)
 
 async def add_emote(message, argstr):
+    if opts.read_only:
+        logger.info('No emote added, read-only enabled')
+        await client.send_message(
+            message.channel,
+            "I'm in read-only mode."
+        )
+        return
     try:
         if argstr is None:
             raise ValueError('No arguments')
@@ -216,6 +231,13 @@ async def add_emote(message, argstr):
         )
 
 async def remove_emote(message, argstr):
+    if opts.read_only:
+        logger.info('No emote removed, read-only enabled')
+        await client.send_message(
+            message.channel,
+            "I'm in read-only mode."
+        )
+        return
     if argstr is None:
         await client.send_message(
             message.channel,
