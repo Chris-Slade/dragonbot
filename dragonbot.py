@@ -17,7 +17,7 @@ import re
 import sys
 import time
 
-__version__    = '0.5.0'
+__version__    = '0.6.0'
 
 ### ARGUMENTS ###
 
@@ -26,6 +26,7 @@ def getopts():
         'config' : 'config.json',
         'emotes' : 'emotes.json',
         'log'    : 'INFO',
+        'greet'  : True,
     }
     parser = argparse.ArgumentParser(description='Discord chat bot')
     parser.set_defaults(**defaults)
@@ -43,6 +44,16 @@ def getopts():
         '-e', '--emotes',
         type=str,
         help='Emotes file to use.'
+    )
+    parser.add_argument(
+        '--greet',
+        dest='greet',
+        action='store_true'
+    )
+    parser.add_argument(
+        '--no-greet',
+        dest='greet',
+        action='store_false'
     )
     opts = parser.parse_args()
     try:
@@ -305,16 +316,17 @@ async def on_ready():
             server_emoji[emoji.name] = emoji
         logger.info('Got {} emoji in this server'.format(len(server_emoji)))
         logger.debug(', '.join(server_emoji.keys()))
-        if 'pride' in server_emoji:
-            await client.send_message(
-                server.default_channel,
-                "{} {}".format(version(), str(server_emoji['pride']))
-            )
-        else:
-            await client.send_message(
-                server.default_channel,
-                'DragonBot has arrived!'
-            )
+        if opts.greet:
+            if 'pride' in server_emoji:
+                await client.send_message(
+                    server.default_channel,
+                    "{} {}".format(version(), str(server_emoji['pride']))
+                )
+            else:
+                await client.send_message(
+                    server.default_channel,
+                    'DragonBot has arrived!'
+                )
     else:
         logger.warning("Couldn't find server")
 
