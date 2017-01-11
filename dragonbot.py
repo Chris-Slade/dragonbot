@@ -17,7 +17,7 @@ import re
 import sys
 import time
 
-__version__    = '0.7.0'
+__version__    = '0.8.0'
 
 ### ARGUMENTS ###
 
@@ -107,6 +107,7 @@ def init():
         "deleteemote" : remove_emote,
         "emotes"      : list_emotes,
         "help"        : help,
+        "say"         : say,
         "stats"       : show_stats,
         "removeemote" : remove_emote,
         "test"        : test,
@@ -259,6 +260,7 @@ Commands:
     emotes      : Show a list of known emotes.
     help        : Show this help message.
     insult      : Insult someone. (Not implemented yet.)
+    say         : Post a message in a given channel. Owner only.
     stats       : Show bot statistics.
     removeemote : Remove an emote.
     test        : For testing and debugging. For the bot owner's use only.
@@ -298,6 +300,23 @@ Session statistics:
     )
     await client.send_message(message.channel, stat_message)
 
+async def say(message, argstr):
+    if message.author.id != config['owner_id']:
+        return
+    else:
+        try:
+            channel_id, user_message = argstr.split(maxsplit=1)
+        except ValueError as e:
+            await client.send_message(
+                message.channel,
+                'Need channel ID and message to send!'
+            )
+            return
+        channel = client.get_channel(channel_id)
+        if channel is not None:
+            await client.send_message(channel, user_message)
+        else:
+            await client.send_message(message.channel, "Couldn't find channel.")
 
 ### EVENT HANDLERS ###
 
