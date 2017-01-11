@@ -17,7 +17,7 @@ import re
 import sys
 import time
 
-__version__    = '0.8.1'
+__version__    = '0.8.2'
 
 ### ARGUMENTS ###
 
@@ -383,7 +383,11 @@ async def on_message(message):
             stats['emotes'] += 1
             await client.send_message(message.channel, emotes[emote])
         else:
-            await client.send_message("I don't know that emote.")
+            await client.send_message(
+                message.channel,
+                "I don't know that emote."
+            )
+
 
 ### RUN ###
 
