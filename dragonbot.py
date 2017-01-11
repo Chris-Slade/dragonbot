@@ -17,7 +17,7 @@ import re
 import sys
 import time
 
-__version__    = '0.8.2'
+__version__    = '0.8.3'
 
 ### ARGUMENTS ###
 
@@ -374,9 +374,9 @@ async def on_message(message):
             await commands[command](message, argstr)
         else:
             logger.info('Ignoring unknown command "{}"'.format(command))
-    elif message.content.startswith('@'):
-        logger.info('Handling emote message "' + message.content + '"')
-        emote = message.content[1:]
+    elif message.clean_content.startswith('@'):
+        logger.info('Handling emote message "' + message.clean_content + '"')
+        emote = message.clean_content[1:].casefold()
         if emote == 'everyone':
             pass
         elif emote in emotes:
@@ -387,7 +387,6 @@ async def on_message(message):
                 message.channel,
                 "I don't know that emote."
             )
-
 
 ### RUN ###
 
