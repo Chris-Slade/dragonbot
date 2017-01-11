@@ -17,7 +17,7 @@ import re
 import sys
 import time
 
-__version__    = '0.6.0'
+__version__    = '0.7.0'
 
 ### ARGUMENTS ###
 
@@ -310,12 +310,14 @@ async def on_ready():
         "Logged into server {}, default channel is {}"
         .format(server, server.default_channel)
     )
+    # Collect server emoji
     if server is not None:
         server_emoji = {}
         for emoji in client.get_all_emojis():
             server_emoji[emoji.name] = emoji
         logger.info('Got {} emoji in this server'.format(len(server_emoji)))
         logger.debug(', '.join(server_emoji.keys()))
+        # Post a greeting
         if opts.greet:
             if 'pride' in server_emoji:
                 await client.send_message(
@@ -329,7 +331,12 @@ async def on_ready():
                 )
     else:
         logger.warning("Couldn't find server")
-
+    # Print list of servers and channels
+    for server in client.servers:
+        print(' '*4, server.name, ' ', server.id)
+        for channel in server.channels:
+            if channel.type == discord.ChannelType.text:
+                print(' '*8, channel.name, ' ', channel.id)
 
 @client.event
 async def on_message(message):
