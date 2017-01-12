@@ -9,6 +9,7 @@ import asyncio
 import atexit
 import collections
 import discord
+import functools
 import json
 import logging
 import os
@@ -137,9 +138,6 @@ def main():
 
 def save_emotes():
     logger.info('Saving emotes')
-    if opts.read_only:
-        logger.info('No save done, read-only enabled')
-        return
     with open(config['emotes_file'], 'w') as fh:
         json.dump(emotes, fh, indent=4, separators = (',', ' : '))
 
@@ -162,6 +160,38 @@ def chunker(seq, size):
 def notNone(value, default):
     return value if value is not None else default
 
+def owner_only(command):
+    u"""
+    Makes a command usable by the owner only, sending a message if someone else
+    tries to call it.
+    """
+    @functools.wraps(command)
+    async def wrapper(message, argstr):
+        if message.author.id != config['owner_id']:
+            await client.send_message(
+                message.channel,
+                'Go away, this is for {}.'.format(config['owner_name'])
+            )
+        else:
+            await command(message, argstr)
+    return wrapper
+
+def not_read_only(command):
+    u"""
+    Makes a command respect the --read-only option, returning without executing
+    it if the option is enabled.
+    """
+    @functools.wraps(command)
+    async def wrapper(message, argstr):
+        if opts.read_only:
+            await client.send_message(
+                message.channel,
+                "I'm in read-only mode."
+            )
+        else:
+            await command(message, argstr)
+    return wrapper
+
 ### COMMANDS ###
 
 async def list_emotes(message, argstr):
@@ -176,14 +206,8 @@ async def list_emotes(message, argstr):
     for chunk in chunker(emote_list, 2000):
         await client.send_message(message.channel, chunk)
 
+@not_read_only
 async def add_emote(message, argstr):
-    if opts.read_only:
-        logger.info('No emote added, read-only enabled')
-        await client.send_message(
-            message.channel,
-            "I'm in read-only mode."
-        )
-        return
     try:
         if argstr is None:
             raise ValueError('No arguments')
@@ -230,6 +254,7 @@ async def add_emote(message, argstr):
                 if 'pride' in server_emoji else 'Added emote!'
         )
 
+@not_read_only
 async def remove_emote(message, argstr):
     if opts.read_only:
         logger.info('No emote removed, read-only enabled')
@@ -292,14 +317,9 @@ Commands:
 ```'''.format(version())
     )
 
+@owner_only
 async def test(message, argstr):
-    if message.author.id != config['owner_id']:
-        await client.send_message(
-            message.channel,
-            'Go away, this is for {}.'.format(config['owner_name'])
-        )
-    else:
-        pass
+    await client.send_message(message.channel, 'test')
 
 async def show_stats(message, argstr):
     stat_message = """```
@@ -324,23 +344,21 @@ Session statistics:
     )
     await client.send_message(message.channel, stat_message)
 
+@owner_only
 async def say(message, argstr):
-    if message.author.id != config['owner_id']:
+    try:
+        channel_id, user_message = argstr.split(maxsplit=1)
+    except ValueError as e:
+        await client.send_message(
+            message.channel,
+            'Need channel ID and message to send!'
+        )
         return
+    channel = client.get_channel(channel_id)
+    if channel is not None:
+        await client.send_message(channel, user_message)
     else:
-        try:
-            channel_id, user_message = argstr.split(maxsplit=1)
-        except ValueError as e:
-            await client.send_message(
-                message.channel,
-                'Need channel ID and message to send!'
-            )
-            return
-        channel = client.get_channel(channel_id)
-        if channel is not None:
-            await client.send_message(channel, user_message)
-        else:
-            await client.send_message(message.channel, "Couldn't find channel.")
+        await client.send_message(message.channel, "Couldn't find channel.")
 
 ### EVENT HANDLERS ###
 
@@ -393,7 +411,13 @@ async def on_message(message):
 
         if command in commands:
             stats['commands'] += 1
-            await commands[command](message, argstr)
+            try:
+                await commands[command](message, argstr)
+            except TypeError as e:
+                logger.exception(
+                    'Failed to execute command "{}"'.format(command),
+                    exc_info=e
+                )
         else:
             logger.info('Ignoring unknown command "{}"'.format(command))
     elif message.clean_content.startswith('@'):
