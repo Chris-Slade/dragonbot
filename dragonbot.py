@@ -18,7 +18,7 @@ import re
 import sys
 import time
 
-__version__    = '0.8.4'
+__version__    = '0.9.0'
 
 ### ARGUMENTS ###
 
@@ -98,26 +98,22 @@ def init():
     # Initialize emotes
     if 'emotes_file' not in config:
         config['emotes_file'] = opts.emotes
-    if not os.path.isfile(config['emotes_file']):
-        logger.info('Creating new emotes file')
-        with open(opts.emotes, 'x') as fh:
-            fh.writelines(["{}"])
-    with open(config['emotes_file'], 'r', encoding='utf-8') as fh:
-        emotes = json.load(fh)
+    emotes = load_emotes(config['emotes_file'])
 
     # Add emote-saving hook
     atexit.register(save_emotes)
 
     commands = {
-        "addemote"    : add_emote,
-        "deleteemote" : remove_emote,
-        "emotes"      : list_emotes,
-        "help"        : help,
-        "say"         : say,
-        "stats"       : show_stats,
-        "removeemote" : remove_emote,
-        "test"        : test,
-        "truth"       : truth,
+        "addemote"      : add_emote,
+        "deleteemote"   : remove_emote,
+        "emotes"        : list_emotes,
+        "help"          : help,
+        "say"           : say,
+        "stats"         : show_stats,
+        "refreshemotes" : refresh_emotes,
+        "removeemote"   : remove_emote,
+        "test"          : test,
+        "truth"         : truth,
     }
 
     stats = collections.defaultdict(int)
@@ -135,6 +131,15 @@ def main():
         sys.exit(1)
 
 ### UTILITY FUNCTIONS ###
+
+def load_emotes(emotes_file):
+    if not os.path.isfile(emotes_file):
+        logger.info('Creating new emotes file')
+        with open(opts.emotes, 'x') as fh:
+            fh.writelines(["{}"])
+    with open(emotes_file, 'r', encoding='utf-8') as fh:
+        emotes = json.load(fh)
+    return emotes
 
 def save_emotes():
     logger.info('Saving emotes')
@@ -359,6 +364,12 @@ async def say(message, argstr):
         await client.send_message(channel, user_message)
     else:
         await client.send_message(message.channel, "Couldn't find channel.")
+
+@owner_only
+async def refresh_emotes(message, argstr):
+    global emotes
+    emotes = load_emotes(config['emotes_file'])
+    await client.send_message(message.channel, 'Emotes refreshed!')
 
 ### EVENT HANDLERS ###
 
