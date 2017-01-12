@@ -18,7 +18,7 @@ import re
 import sys
 import time
 
-__version__    = '0.9.0'
+__version__ = '0.10.0'
 
 ### ARGUMENTS ###
 
@@ -229,25 +229,10 @@ async def add_emote(message, argstr):
         await client.send_message(message.channel, 'That name is reserved.')
         return
 
-    regex = re.compile(
-        r'^(?:http|ftp)s?://'
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'
-        r'(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
-        r'localhost|'
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
-        r'(?::\d+)?'
-        r'(?:/?|[/?]\S+)$',
-        re.IGNORECASE
-    )
     if emote in emotes:
         await client.send_message(
             message.channel,
             'That emote already exists, {}.'.format(random_insult())
-        )
-    elif not regex.search(url):
-        await client.send_message(
-            message.channel,
-            "That doesn't appear to be a valid URL, {}.".format(random_insult())
         )
     else:
         emotes[emote] = url
