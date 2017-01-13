@@ -18,6 +18,7 @@ import sys
 import time
 
 from emotes import Emotes
+import dragonbot_util as util
 
 __version__ = '0.10.1'
 
@@ -130,7 +131,7 @@ def main():
         logging.error("Caught exception", exc_info=full_exc_info())
         sys.exit(1)
 
-### UTILITY FUNCTIONS ###
+### BOT-RELATED UTILITY FUNCTIONS ###
 
 def version():
     return 'DragonBot v{} (discord.py v{})'.format(
@@ -172,12 +173,6 @@ def random_insult():
             random_insult._cache = insults
     stats['insults picked'] += 1
     return random.choice(random_insult._cache)
-
-def chunker(seq, size):
-    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
-
-def notNone(value, default):
-    return value if value is not None else default
 
 def owner_only(command):
     u"""
@@ -222,7 +217,7 @@ async def list_emotes(message, argstr):
         return
 
     emote_list = ", ".join(sorted(emotes.get_emotes()))
-    for chunk in chunker(emote_list, 2000):
+    for chunk in util.chunker(emote_list, 2000):
         await client.send_message(message.channel, chunk)
 
 @not_read_only
