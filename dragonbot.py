@@ -6,17 +6,17 @@ from __future__ import (
 )
 import argparse
 import asyncio
-import atexit
 import collections
 import discord
 import functools
 import json
 import logging
-import os
 import random
 import re
 import sys
 import time
+
+from emotes import Emotes
 
 __version__ = '0.10.0'
 
@@ -86,7 +86,7 @@ def init():
     # Initialize logger
     logging.basicConfig(
         level=opts.log_level,
-        format='%(asctime)-15s %(levelname)s %(message)s'
+        format='%(asctime)-15s\t%(name)s\t%(levelname)s\t%(message)s'
     )
     logger = logging.getLogger(__name__)
 
@@ -96,12 +96,11 @@ def init():
         config = json.load(fh)
 
     # Initialize emotes
+    # XXX This should be changed so the different sources of the emotes file
+    # location have a clearly defined precedence over one another.
     if 'emotes_file' not in config:
         config['emotes_file'] = opts.emotes
-    emotes = load_emotes(config['emotes_file'])
-
-    # Add emote-saving hook
-    atexit.register(save_emotes)
+    emotes = Emotes(config['emotes_file'])
 
     commands = {
         "addemote"      : add_emote,
@@ -131,20 +130,6 @@ def main():
         sys.exit(1)
 
 ### UTILITY FUNCTIONS ###
-
-def load_emotes(emotes_file):
-    if not os.path.isfile(emotes_file):
-        logger.info('Creating new emotes file')
-        with open(opts.emotes, 'x') as fh:
-            fh.writelines(["{}"])
-    with open(emotes_file, 'r', encoding='utf-8') as fh:
-        emotes = json.load(fh)
-    return emotes
-
-def save_emotes():
-    logger.info('Saving emotes')
-    with open(config['emotes_file'], 'w') as fh:
-        json.dump(emotes, fh, indent=4, separators = (',', ' : '))
 
 def version():
     return 'DragonBot v{} (discord.py v{})'.format(
@@ -207,7 +192,7 @@ async def list_emotes(message, argstr):
         )
         return
 
-    emote_list = ", ".join(sorted(emotes))
+    emote_list = ", ".join(sorted(emotes.get_emotes()))
     for chunk in chunker(emote_list, 2000):
         await client.send_message(message.channel, chunk)
 
@@ -229,19 +214,19 @@ async def add_emote(message, argstr):
         await client.send_message(message.channel, 'That name is reserved.')
         return
 
-    if emote in emotes:
-        await client.send_message(
-            message.channel,
-            'That emote already exists, {}.'.format(random_insult())
-        )
-    else:
-        emotes[emote] = url
-        save_emotes()
+    try:
+        emotes.add_emote(emote, url)
+        emotes.save_emotes()
         stats['emotes added'] += 1
         await client.send_message(
             message.channel,
             'Added emote! ' + str(server_emoji['pride'])
                 if 'pride' in server_emoji else 'Added emote!'
+        )
+    except emotes.EmoteExistsError:
+        await client.send_message(
+            message.channel,
+            'That emote already exists, {}.'.format(random_insult())
         )
 
 @not_read_only
@@ -263,17 +248,17 @@ async def remove_emote(message, argstr):
         )
         return
 
-    emote = argstr.casefold()
-    if emote in emotes:
-        del emotes[emote]
-        save_emotes()
+    emote = argstr
+    try:
+        emotes.remove_emote(emote)
+        emotes.save_emotes()
         stats['emotes deleted'] += 1
         await client.send_message(
             message.channel,
             'Deleted emote! ' + str(server_emoji['pride'])
                 if 'pride' in server_emoji else 'Deleted emote!'
         )
-    else:
+    except KeyError:
         await client.send_message(
             message.channel,
             "That emote isn't stored, {}. {}".format(
@@ -325,7 +310,7 @@ Session statistics:
 ```""".format(
         time.time() - stats['start time'],
         stats['connect time'],
-        len(emotes.keys()),
+        len(emotes),
         stats['emotes added'],
         stats['emotes deleted'],
         stats['messages'],
@@ -352,8 +337,7 @@ async def say(message, argstr):
 
 @owner_only
 async def refresh_emotes(message, argstr):
-    global emotes
-    emotes = load_emotes(config['emotes_file'])
+    emotes.load_emotes(config['emotes_file'])
     await client.send_message(message.channel, 'Emotes refreshed!')
 
 ### EVENT HANDLERS ###
@@ -418,13 +402,11 @@ async def on_message(message):
             logger.info('Ignoring unknown command "{}"'.format(command))
     elif message.clean_content.startswith('@'):
         logger.info('Handling emote message "' + message.clean_content + '"')
-        emote = message.clean_content[1:].casefold()
-        if emote == 'everyone':
-            pass
-        elif emote in emotes:
+        emote = message.clean_content[1:]
+        try:
+            await client.send_message(message.channel, emotes.get_emote(emote))
             stats['emotes'] += 1
-            await client.send_message(message.channel, emotes[emote])
-        else:
+        except KeyError:
             await client.send_message(
                 message.channel,
                 "I don't know that emote."
