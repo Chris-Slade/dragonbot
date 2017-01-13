@@ -19,7 +19,7 @@ import time
 
 from emotes import Emotes
 
-__version__ = '0.10.0'
+__version__ = '0.10.1'
 
 ### ARGUMENTS ###
 
@@ -410,6 +410,9 @@ async def on_ready():
 async def on_message(message):
     stats['messages'] += 1
     if message.content.startswith('!'):
+        if message.content == '!':
+            logger.info('Ignoring null command')
+            return
         logger.info('Handling command message "' + message.content + '"')
         split = message.content[1:].split(maxsplit=1)
         command = split[0] if len(split) >= 1 else None
