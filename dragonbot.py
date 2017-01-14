@@ -21,7 +21,7 @@ import time
 from storage import Storage, KeyExistsError
 import dragonbot_util as util
 
-__version__ = '0.11.0'
+__version__ = '0.11.2'
 
 ### ARGUMENTS ###
 
@@ -556,7 +556,7 @@ async def on_message(message):
                 "I don't know that emote."
             )
     # Check for keywords
-    words = util.remove_punctuation(message.clean_content).split()
+    words = util.remove_punctuation(message.clean_content).casefold().split()
     for word in words:
         if word in keywords:
             reaction = keywords.get_entry(word)
