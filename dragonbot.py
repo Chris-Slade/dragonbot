@@ -20,7 +20,7 @@ import time
 from emotes import Emotes
 import dragonbot_util as util
 
-__version__ = '0.10.1'
+__version__ = '0.10.2'
 
 ### ARGUMENTS ###
 
@@ -372,12 +372,14 @@ async def on_ready():
     logger.info('Bot is ready')
     stats['connect time'] = time.time() - stats['start time']
     server = client.get_server(config['greetings_server'])
-    logger.info(
-        "Logged into server {}, default channel is {}"
-        .format(server, server.default_channel)
-    )
-    # Collect server emoji
+
     if server is not None:
+        # Log server and default channel
+        logger.info("Logged into server {}".format(server))
+        if server.default_channel is not None:
+            logger.info("Default channel is {}".format(server.default_channel))
+
+        # Collect server emoji
         server_emoji = {}
         for emoji in client.get_all_emojis():
             server_emoji[emoji.name] = emoji
@@ -386,7 +388,9 @@ async def on_ready():
         # Post a greeting
         if opts.greet:
             await client.send_message(
-                server.default_channel,
+                server.get_channel(config['greetings_channel'])
+                    if 'greetings_channel' in config
+                    else server.default_channel,
                 "{} {}".format(
                     version(),
                     server_emoji['pride'] if 'pride' in server_emoji else ''
