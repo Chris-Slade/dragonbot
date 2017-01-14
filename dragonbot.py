@@ -14,13 +14,14 @@ import json
 import logging
 import random
 import re
+import string
 import sys
 import time
 
-from emotes import Emotes
+from storage import Storage, KeyExistsError
 import dragonbot_util as util
 
-__version__ = '0.10.5'
+__version__ = '0.11.0'
 
 ### ARGUMENTS ###
 
@@ -28,6 +29,7 @@ def getopts():
     defaults = {
         'config'    : 'config.json',
         'emotes'    : 'emotes.json',
+        'keywords'  : 'keywords.json',
         'greet'     : True,
         'log'       : 'INFO',
         'ro-emotes' : False,
@@ -48,6 +50,11 @@ def getopts():
         '-e', '--emotes',
         type=str,
         help='Emotes file to use.'
+    )
+    parser.add_argument(
+        '-k', '--keywords',
+        type=str,
+        help='Keywords file to use.'
     )
     parser.add_argument(
         '--greet',
@@ -80,7 +87,16 @@ loop   = asyncio.get_event_loop()
 client = discord.Client(loop=loop)
 
 def init():
-    global client, commands, config, emotes, logger, opts, server_emoji, stats
+    global            \
+        client,       \
+        commands,     \
+        config,       \
+        emotes,       \
+        keywords,     \
+        logger,       \
+        opts,         \
+        server_emoji, \
+        stats
 
     # Get options
     opts = getopts()
@@ -102,17 +118,28 @@ def init():
     # location have a clearly defined precedence over one another.
     if 'emotes_file' not in config:
         config['emotes_file'] = opts.emotes
-    emotes = Emotes(config['emotes_file'])
+    emotes = Storage(config['emotes_file'])
+    logger.info('Loaded {} emotes from disk'.format(len(emotes)))
+
+    # Initialize keywords
+    if 'keywords_file' not in config:
+        config['keywords_file'] = opts.keywords
+    keywords = Storage(config['keywords_file'])
+    logger.info('Loaded {} keywords from disk'.format(len(keywords)))
 
     commands = {
         "addemote"      : add_emote,
+        "addkeyword"    : add_keyword,
         "deleteemote"   : remove_emote,
+        "deletekeyword" : remove_keyword,
         "emotes"        : list_emotes,
         "help"          : help,
-        "say"           : say,
-        "stats"         : show_stats,
+        "keywords"      : list_keywords,
         "refreshemotes" : refresh_emotes,
         "removeemote"   : remove_emote,
+        "removekeyword" : remove_keyword,
+        "say"           : say,
+        "stats"         : show_stats,
         "test"          : test,
         "truth"         : truth,
     }
@@ -208,17 +235,22 @@ def not_read_only(command):
 
 ### COMMANDS ###
 
-async def list_emotes(message, argstr):
-    if len(emotes) == 0:
+async def list_stored_items(message, storage, items='items'):
+    if len(storage) == 0:
         await client.send_message(
             message.channel,
-            "I don't know any emotes yet!"
+            "I don't have any {} yet!".format(items)
         )
-        return
-
-    emote_list = ", ".join(sorted(emotes.get_emotes()))
-    for chunk in util.chunker(emote_list, 2000):
+    list = ", ".join(sorted(storage.get_entries()))
+    for chunk in util.chunker(list, 2000):
         await client.send_message(message.channel, chunk)
+
+
+async def list_emotes(message, argstr):
+    await list_stored_items(message, emotes, 'emotes')
+
+async def list_keywords(message, argstr):
+    await list_stored_items(message, keywords, 'keywords')
 
 @not_read_only
 async def add_emote(message, argstr):
@@ -245,8 +277,8 @@ async def add_emote(message, argstr):
         return
 
     try:
-        emotes.add_emote(emote, body)
-        emotes.save_emotes()
+        emotes.add_entry(emote, body)
+        emotes.save()
         logger.info(
             'Emote "{}" added by "{}"'.format(
                 emote,
@@ -259,7 +291,7 @@ async def add_emote(message, argstr):
             'Added emote! ' + str(server_emoji['pride'])
                 if 'pride' in server_emoji else 'Added emote!'
         )
-    except emotes.EmoteExistsError:
+    except emotes.KeyExistsError:
         await client.send_message(
             message.channel,
             'That emote already exists, {}.'.format(random_insult())
@@ -286,8 +318,8 @@ async def remove_emote(message, argstr):
 
     emote = argstr
     try:
-        emotes.remove_emote(emote)
-        emotes.save_emotes()
+        emotes.remove_entry(emote)
+        emotes.save()
         logger.info(
             'Emote "{}" deleted by "{}"'.format(
                 emote,
@@ -318,26 +350,32 @@ async def help(message, argstr):
 '''```
 {}
 Commands:
-    addemote    : Adds an emote. For example:
-        `!addemote {example} {http://example.com/emote.png}` will allow you to
-        use `@example` to have the corresponding URL posted by the bot. Because
-        both emote names and the corresponding strings may contain whitespace,
-        both must be surrounded by curly braces, as in the example.
-    deleteemote : Alias for `removeemote`.
-    emotes      : Show a list of known emotes.
-    help        : Show this help message.
-    insult      : Insult someone. (Not implemented yet.)
-    say         : Post a message in a given channel. Owner only.
-    stats       : Show bot statistics.
-    removeemote : Remove an emote.
-    test        : For testing and debugging. For the bot owner's use only.
-    truth       : Tell the truth.
+  addemote      : Adds an emote. For example,
+      `!addemote {example}{http://example.com/emote.png}` will allow you to use
+      `@example` to have the corresponding URL posted by the bot. Because both
+      emote names and the corresponding strings may contain whitespace, both
+      must be surrounded by curly braces, as in the example.
+  addkeyword    : Add a keyword and a reaction. When the bot sees the keyword
+      in a message, it will react with the specified reaction.
+  deleteemote   : Alias for `removeemote`.
+  deletekeyword : Alias for `removekeyword`.
+  emotes        : Show a list of known emotes.
+  help          : Show this help message.
+  insult        : Insult someone. (Not implemented yet.)
+  removeemote   : Remove an emote.
+  removekeyword : Remove a keyword.
+  say           : Post a message in a given channel. Owner only.
+  stats         : Show bot statistics.
+  test          : For testing and debugging. For the bot owner's use only.
+  truth         : Tell the truth.
 ```'''.format(version())
     )
 
 @owner_only
 async def test(message, argstr):
-    await client.send_message(message.channel, 'test')
+    logger.info(message.content)
+    logger.info(message.clean_content)
+    await client.add_reaction(message, 'pride:266322418887294976')
 
 async def show_stats(message, argstr):
     stat_message = """```
@@ -380,8 +418,63 @@ async def say(message, argstr):
 
 @owner_only
 async def refresh_emotes(message, argstr):
-    emotes.load_emotes(config['emotes_file'])
+    emotes.load(config['emotes_file'])
     await client.send_message(message.channel, 'Emotes refreshed!')
+
+@not_read_only
+async def add_keyword(message, argstr):
+    try:
+        name, emote = argstr.split(maxsplit=1)
+    except:
+        await client.send_message(message.channel, 'Need a keyword and emote.')
+
+    # Try to extract a custom emoji's name and ID
+    match = re.match(r'<:([^:]+:\d+)>', emote)
+    if match:
+        emote = match.group(1)
+
+    # Assume an emoji is correct and just store it
+    try:
+        keywords.add_entry(name, emote)
+        await client.send_message(
+            message.channel,
+            'Added keyword reaction!'
+        )
+        logger.info(
+            '{} added keyword "{}" -> "{}"'.format(
+                message.author.name,
+                name,
+                emote
+            )
+        )
+    except KeyExistsError:
+        await client.send_message(
+            message.channel,
+            'That keyword already has a reaction, you {}.'.format(
+                random_insult()
+            )
+        )
+
+@not_read_only
+async def remove_keyword(message, argstr):
+    name = argstr
+    try:
+        keywords.remove_entry(name)
+        await client.send_message(
+            message.channel,
+            'Removed keyword reaction!'
+        )
+        logger.info(
+            '{} removed keyword "{}"'.format(
+                message.author.name,
+                name
+            )
+        )
+    except KeyError:
+        await client.send_message(
+            message.channel,
+            "That keyword doesn't exist!"
+        )
 
 ### EVENT HANDLERS ###
 
@@ -454,13 +547,20 @@ async def on_message(message):
         logger.info('Handling emote message "' + message.clean_content + '"')
         emote = message.clean_content[1:]
         try:
-            await client.send_message(message.channel, emotes.get_emote(emote))
+            await client.send_message(message.channel, emotes.get_entry(emote))
             stats['emotes'] += 1
         except KeyError:
             await client.send_message(
                 message.channel,
                 "I don't know that emote."
             )
+    # Check for keywords
+    words = util.remove_punctuation(message.clean_content).split()
+    for word in words:
+        if word in keywords:
+            reaction = keywords.get_entry(word)
+            logger.info("Reacting with {}".format(reaction))
+            await client.add_reaction(message, reaction)
 
 ### RUN ###
 
