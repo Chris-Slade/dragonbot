@@ -154,7 +154,7 @@ def main():
     stats['start time'] = time.time()
     try:
         client.run(config['credentials']['token'])
-    except Exception as e:
+    except Exception:
         logging.error("Caught exception", exc_info=full_exc_info())
         sys.exit(1)
 
@@ -404,7 +404,7 @@ Session statistics:
 async def say(message, argstr):
     try:
         channel_id, user_message = argstr.split(maxsplit=1)
-    except ValueError as e:
+    except ValueError:
         await client.send_message(
             message.channel,
             'Need channel ID and message to send!'
