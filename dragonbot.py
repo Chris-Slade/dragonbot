@@ -241,8 +241,8 @@ async def list_stored_items(message, storage, items='items'):
             message.channel,
             "I don't have any {} yet!".format(items)
         )
-    list = ", ".join(sorted(storage.get_entries()))
-    for chunk in util.chunker(list, 2000):
+    item_list = ", ".join(sorted(storage.get_entries()))
+    for chunk in util.chunker(item_list, 2000):
         await client.send_message(message.channel, chunk)
 
 
