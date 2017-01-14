@@ -291,7 +291,7 @@ async def add_emote(message, argstr):
             'Added emote! ' + str(server_emoji['pride'])
                 if 'pride' in server_emoji else 'Added emote!'
         )
-    except emotes.KeyExistsError:
+    except KeyExistsError:
         await client.send_message(
             message.channel,
             'That emote already exists, {}.'.format(random_insult())
