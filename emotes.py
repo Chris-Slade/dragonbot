@@ -5,10 +5,7 @@ import os
 
 class Emotes(object):
     class EmoteExistsError(Exception):
-        def __init__(self, value):
-            self.value = value
-        def __str__(self):
-            return repr(self.value)
+        pass
 
     def __init__(self, emotes_file):
         self.emotes_file = emotes_file
@@ -43,7 +40,7 @@ class Emotes(object):
         if key not in self.emotes:
             self.emotes[key] = value
         else:
-            raise EmoteExistsError('Emote already exists')
+            raise Emotes.EmoteExistsError('Emote already exists')
 
     def remove_emote(self, key):
         if key in self.emotes:
