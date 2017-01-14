@@ -155,7 +155,7 @@ def main():
     try:
         client.run(config['credentials']['token'])
     except Exception:
-        logging.error("Caught exception", exc_info=full_exc_info())
+        logging.error("Exception reached main()")
         sys.exit(1)
 
 ### BOT-RELATED UTILITY FUNCTIONS ###
