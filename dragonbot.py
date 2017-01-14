@@ -351,10 +351,11 @@ async def show_help(message, argstr):
 {}
 Commands:
   addemote      : Adds an emote. For example,
-      `!addemote {example}{http://example.com/emote.png}` will allow you to use
-      `@example` to have the corresponding URL posted by the bot. Because both
-      emote names and the corresponding strings may contain whitespace, both
-      must be surrounded by curly braces, as in the example.
+      `!addemote {{example}}{{http://example.com/emote.png}}` will allow
+      you to use `@example` to have the corresponding URL posted by the
+      bot. Because both emote names and the corresponding strings may
+      contain whitespace, both must be surrounded by curly braces, as in
+      the example.
   addkeyword    : Add a keyword and a reaction. When the bot sees the keyword
       in a message, it will react with the specified reaction.
   deleteemote   : Alias for `removeemote`.
