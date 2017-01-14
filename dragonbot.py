@@ -133,7 +133,7 @@ def init():
         "deleteemote"   : remove_emote,
         "deletekeyword" : remove_keyword,
         "emotes"        : list_emotes,
-        "help"          : help,
+        "help"          : show_help,
         "keywords"      : list_keywords,
         "refreshemotes" : refresh_emotes,
         "removeemote"   : remove_emote,
@@ -344,7 +344,7 @@ async def remove_emote(message, argstr):
 async def truth(message, argstr):
     await client.send_message(message.channel, 'slushrfggts')
 
-async def help(message, argstr):
+async def show_help(message, argstr):
     await client.send_message(
         message.channel,
 '''```
