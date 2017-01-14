@@ -20,7 +20,7 @@ import time
 from emotes import Emotes
 import dragonbot_util as util
 
-__version__ = '0.10.2'
+__version__ = '0.10.3'
 
 ### ARGUMENTS ###
 
@@ -241,6 +241,12 @@ async def add_emote(message, argstr):
     try:
         emotes.add_emote(emote, url)
         emotes.save_emotes()
+        logger.info(
+            'Emote "{}" added by "{}"'.format(
+                emote,
+                message.author.name
+            )
+        )
         stats['emotes added'] += 1
         await client.send_message(
             message.channel,
@@ -276,6 +282,12 @@ async def remove_emote(message, argstr):
     try:
         emotes.remove_emote(emote)
         emotes.save_emotes()
+        logger.info(
+            'Emote "{}" deleted by "{}"'.format(
+                emote,
+                message.author.name
+            )
+        )
         stats['emotes deleted'] += 1
         await client.send_message(
             message.channel,
