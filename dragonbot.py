@@ -20,7 +20,7 @@ import time
 from emotes import Emotes
 import dragonbot_util as util
 
-__version__ = '0.10.4'
+__version__ = '0.10.5'
 
 ### ARGUMENTS ###
 
@@ -225,21 +225,27 @@ async def add_emote(message, argstr):
     try:
         if argstr is None:
             raise ValueError('No arguments')
-        emote, url = argstr.rsplit(maxsplit=1)
-    except ValueError as e:
+        pattern = re.compile(
+            r'^ \s* \{ \s* ([^{}]+) \s* \} \s* \{ \s* ([^{}]+) \s* \}',
+            re.X
+        )
+        match = pattern.search(argstr)
+        if match:
+            emote, body = match.group(1, 2)
+            emote = emote.strip()
+            body = body.strip()
+        else:
+            raise ValueError('Malformed parameters to !addemote')
+    except Exception as e:
+        logger.info('Failed to parse !addcommand', exc_info=e)
         await client.send_message(
             message.channel,
             'Give me a name and a URL, {}.'.format(random_insult())
         )
         return
 
-    emote = emote.casefold()
-    if emote == 'everyone':
-        await client.send_message(message.channel, 'That name is reserved.')
-        return
-
     try:
-        emotes.add_emote(emote, url)
+        emotes.add_emote(emote, body)
         emotes.save_emotes()
         logger.info(
             'Emote "{}" added by "{}"'.format(
@@ -313,9 +319,10 @@ async def help(message, argstr):
 {}
 Commands:
     addemote    : Adds an emote. For example:
-        `!addemote example http://example.com/emote.png`
-        will allow you to use `@example` to have the corresponding URL
-        posted by the bot.
+        `!addemote {example} {http://example.com/emote.png}` will allow you to
+        use `@example` to have the corresponding URL posted by the bot. Because
+        both emote names and the corresponding strings may contain whitespace,
+        both must be surrounded by curly braces, as in the example.
     deleteemote : Alias for `removeemote`.
     emotes      : Show a list of known emotes.
     help        : Show this help message.

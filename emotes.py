@@ -59,4 +59,4 @@ class Emotes(object):
         return self.emotes.keys()
 
     def _normalize_key(key):
-        return key.casefold()
+        return key.strip().casefold()
