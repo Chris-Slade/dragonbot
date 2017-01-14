@@ -30,6 +30,11 @@ class Storage(object):
                 fh.writelines(["{}"])
         with open(file, 'r', encoding='utf-8') as fh:
             self.entries = json.load(fh)
+        if not isinstance(self.entries, dict):
+            self.logger.warning(
+                'Expected dict from JSON file, '
+                'got {}'.format(type(self.entries))
+            )
 
     def save(self):
         self.logger.info('Saving entries')

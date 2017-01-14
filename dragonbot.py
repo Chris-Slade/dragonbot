@@ -73,7 +73,7 @@ def getopts():
     opts = parser.parse_args()
     try:
         log_level = getattr(logging, opts.log)
-        if type(log_level) != int:
+        if isinstance(log_level, int):
             raise AttributeError
         opts.log_level = log_level
     except AttributeError:
@@ -133,7 +133,7 @@ def init():
         "deleteemote"   : remove_emote,
         "deletekeyword" : remove_keyword,
         "emotes"        : list_emotes,
-        "help"          : help,
+        "help"          : show_help,
         "keywords"      : list_keywords,
         "refreshemotes" : refresh_emotes,
         "removeemote"   : remove_emote,
@@ -154,8 +154,8 @@ def main():
     stats['start time'] = time.time()
     try:
         client.run(config['credentials']['token'])
-    except Exception as e:
-        logging.error("Caught exception", exc_info=full_exc_info())
+    except Exception:
+        logging.error("Exception reached main()")
         sys.exit(1)
 
 ### BOT-RELATED UTILITY FUNCTIONS ###
@@ -241,8 +241,8 @@ async def list_stored_items(message, storage, items='items'):
             message.channel,
             "I don't have any {} yet!".format(items)
         )
-    list = ", ".join(sorted(storage.get_entries()))
-    for chunk in util.chunker(list, 2000):
+    item_list = ", ".join(sorted(storage.get_entries()))
+    for chunk in util.chunker(item_list, 2000):
         await client.send_message(message.channel, chunk)
 
 
@@ -291,7 +291,7 @@ async def add_emote(message, argstr):
             'Added emote! ' + str(server_emoji['pride'])
                 if 'pride' in server_emoji else 'Added emote!'
         )
-    except emotes.KeyExistsError:
+    except KeyExistsError:
         await client.send_message(
             message.channel,
             'That emote already exists, {}.'.format(random_insult())
@@ -344,17 +344,18 @@ async def remove_emote(message, argstr):
 async def truth(message, argstr):
     await client.send_message(message.channel, 'slushrfggts')
 
-async def help(message, argstr):
+async def show_help(message, argstr):
     await client.send_message(
         message.channel,
 '''```
 {}
 Commands:
   addemote      : Adds an emote. For example,
-      `!addemote {example}{http://example.com/emote.png}` will allow you to use
-      `@example` to have the corresponding URL posted by the bot. Because both
-      emote names and the corresponding strings may contain whitespace, both
-      must be surrounded by curly braces, as in the example.
+      `!addemote {{example}}{{http://example.com/emote.png}}` will allow
+      you to use `@example` to have the corresponding URL posted by the
+      bot. Because both emote names and the corresponding strings may
+      contain whitespace, both must be surrounded by curly braces, as in
+      the example.
   addkeyword    : Add a keyword and a reaction. When the bot sees the keyword
       in a message, it will react with the specified reaction.
   deleteemote   : Alias for `removeemote`.
@@ -404,7 +405,7 @@ Session statistics:
 async def say(message, argstr):
     try:
         channel_id, user_message = argstr.split(maxsplit=1)
-    except ValueError as e:
+    except ValueError:
         await client.send_message(
             message.channel,
             'Need channel ID and message to send!'
