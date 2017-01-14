@@ -73,7 +73,7 @@ def getopts():
     opts = parser.parse_args()
     try:
         log_level = getattr(logging, opts.log)
-        if type(log_level) != int:
+        if isinstance(log_level, int):
             raise AttributeError
         opts.log_level = log_level
     except AttributeError:
