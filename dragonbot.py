@@ -20,7 +20,7 @@ import sys
 import time
 
 from storage import Storage, KeyExistsError
-import dragonbot_util as util
+import util
 
 __version__ = '0.11.2'
 
