@@ -6,6 +6,7 @@ from __future__ import (
 )
 import argparse
 import asyncio
+import atexit
 import codecs
 import collections
 import discord
@@ -107,6 +108,10 @@ def init():
         format='%(asctime)-15s\t%(name)s\t%(levelname)s\t%(message)s'
     )
     logger = logging.getLogger(__name__)
+
+    def log_exit():
+        logger.info('Exiting')
+    atexit.register(log_exit);
 
     # Initialize config
     logger.info('Loading config')
