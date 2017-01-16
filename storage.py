@@ -39,7 +39,13 @@ class Storage(object):
     def save(self):
         self.logger.info('Saving entries')
         with open(self.file, 'w') as fh:
-            json.dump(self.entries, fh, indent=4, separators=(',', ' : '))
+            json.dump(
+                self.entries,
+                fh,
+                indent=4,
+                separators=(',', ' : '),
+                sort_keys=True
+            )
 
     def add_entry(self, key, value):
         key = Storage._normalize_key(key)
