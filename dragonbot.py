@@ -7,19 +7,18 @@ from __future__ import (
 import argparse
 import asyncio
 import atexit
-import codecs
 import collections
 import discord
 import functools
 import json
 import logging
-import random
 import re
 import string
 import sys
 import time
 
 from storage import Storage, KeyExistsError
+from insult import random_insult
 import util
 
 __version__ = '0.11.2'
@@ -170,41 +169,6 @@ def version():
         __version__,
         discord.__version__
     )
-
-def random_insult():
-    '''
-    Random insults that the bot calls people who fail to use its
-    commands properly.
-
-    These are loaded from a JSON file specified by the `insults_file` in
-    `config.json`. They should be given as an object with two fields:
-    `encoding`, which optionally specifies the encoding of the insults
-    (a parameter to `codecs.decode`), and `insults`, which is an array
-    containing the insults.
-
-    The `encoding` field is to allow obfuscation of the insults, e.g.
-    with `rot_13`. The strings themselves must be encoded as UTF-8 text,
-    in accordance with RFC 7159.
-    '''
-    if not hasattr(random_insult, '_cache'):
-        if 'insults_file' not in config:
-            raise FileNotFoundError('Could not find insults file in config')
-        else:
-            with open(config['insults_file'], 'r', encoding='utf-8') as fh:
-                obj = json.load(fh)
-            if 'insults' not in obj:
-                raise ValueError(
-                    'Malformed insults object, expected "insults" field'
-                )
-            insults = obj['insults']
-            if 'encoding' in obj:
-                insults = [
-                    codecs.decode(insult, obj['encoding'])
-                        for insult in obj['insults']
-                ]
-            random_insult._cache = insults
-    stats['insults picked'] += 1
-    return random.choice(random_insult._cache)
 
 def owner_only(command):
     u"""
