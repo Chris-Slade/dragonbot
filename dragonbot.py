@@ -454,6 +454,21 @@ async def insult(message, argstr):
             "{}: {}".format(name, insult)
         )
 
+async def do_keyword_reactions(message):
+    words = util.remove_punctuation(message.clean_content).casefold().split()
+    for word in words:
+        if word in keywords:
+            reaction = keywords.get_entry(word)
+            if isinstance(reaction, list):
+                for r in reaction:
+                    logger.info("Reacting with {}".format(r))
+                    await client.add_reaction(message, r)
+            else:
+                logger.info("Reacting with {}".format(reaction))
+                await client.add_reaction(message, reaction)
+
+            stats['keywords seen'] += 1
+
 ### EVENT HANDLERS ###
 
 @client.event
@@ -531,19 +546,7 @@ async def on_message(message):
             await client.add_reaction(message, '❔')
 
     # Check for keywords
-    words = util.remove_punctuation(message.clean_content).casefold().split()
-    for word in words:
-        if word in keywords:
-            reaction = keywords.get_entry(word)
-            if isinstance(reaction, list):
-                for r in reaction:
-                    logger.info("Reacting with {}".format(r))
-                    await client.add_reaction(message, r)
-            else:
-                logger.info("Reacting with {}".format(reaction))
-                await client.add_reaction(message, reaction)
-
-            stats['keywords seen'] += 1
+    await do_keyword_reactions(message)
 
 ### RUN ###
 
