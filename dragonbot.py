@@ -383,26 +383,19 @@ async def test(message, argstr):
     await client.add_reaction(message, 'pride:266322418887294976')
 
 async def show_stats(message, argstr):
-    stat_message = """```
-Session statistics:
-    Uptime:             {:6f}s
-    Time to connect:    {:6f}s
-    Emotes known:       {}
-    Emotes added:       {}
-    Emotes removed:     {}
-    Messages processed: {}
-    Commands called:    {}
-    Emotes used:        {}
-```""".format(
-        time.time() - stats['start time'],
-        stats['connect time'],
-        len(emotes),
-        stats['emotes added'],
-        stats['emotes deleted'],
-        stats['messages'],
-        stats['commands'],
-        stats['emotes'],
-    )
+    stats['uptime']         = time.time() - stats['start time']
+    stats['emotes known']   = len(emotes)
+    stats['keywords known'] = len(keywords)
+
+    sb = ["```Session statistics:"]
+
+    longest = max(len(_) for _ in stats)
+    stat_fmt = '\t{:<' + str(longest + 1) + '}: {:>7}'
+
+    for stat in sorted(stats.keys()):
+        sb.append(stat_fmt.format(stat.title(), stats[stat]))
+    sb.append("```")
+    stat_message = "\n".join(sb);
     await client.send_message(message.channel, stat_message)
 
 @owner_only
@@ -524,7 +517,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    stats['messages'] += 1
+    stats['messages seen'] += 1
     if message.content.startswith('!'):
         if message.content == '!':
             logger.info('Ignoring null command')
@@ -538,7 +531,7 @@ async def on_message(message):
             logger.warning('Mishandled command message: "{}"'.format(message.content))
 
         if command in commands:
-            stats['commands'] += 1
+            stats['commands seen'] += 1
             try:
                 await commands[command](message, argstr)
             except TypeError as e:
@@ -553,7 +546,7 @@ async def on_message(message):
         emote = message.clean_content[1:]
         try:
             await client.send_message(message.channel, emotes.get_entry(emote))
-            stats['emotes'] += 1
+            stats['emotes seen'] += 1
         except KeyError:
             await client.send_message(
                 message.channel,
@@ -566,6 +559,7 @@ async def on_message(message):
             reaction = keywords.get_entry(word)
             logger.info("Reacting with {}".format(reaction))
             await client.add_reaction(message, reaction)
+            stats['keywords seen'] += 1
 
 ### RUN ###
 
