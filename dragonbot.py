@@ -111,7 +111,7 @@ def init():
 
     def log_exit():
         logger.info('Exiting')
-    atexit.register(log_exit);
+    atexit.register(log_exit)
 
     # Initialize config
     logger.info('Loading config')
