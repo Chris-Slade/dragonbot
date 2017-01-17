@@ -250,7 +250,6 @@ async def list_stored_items(message, storage, items='items'):
     for chunk in util.chunker(item_list, 2000):
         await client.send_message(message.channel, chunk)
 
-
 async def list_emotes(message, argstr):
     await list_stored_items(message, emotes, 'emotes')
 
