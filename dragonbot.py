@@ -398,13 +398,9 @@ async def add_keyword(message, argstr):
 
     # Assume an emoji is correct and just store it
     if name in keywords:
-        other = keywords.get_entry(name)
-        if isinstance(other, list):
-            other.append(emote)
-        else:
-            keywords.replace_entry(name, [other, emote])
+        keywords.get_entry(name).append(emote)
     else:
-        keywords.add_entry(name, emote)
+        keywords.add_entry(name, [emote])
     keywords.save()
     await client.send_message(
         message.channel,
@@ -458,15 +454,10 @@ async def do_keyword_reactions(message):
     words = util.remove_punctuation(message.clean_content).casefold().split()
     for word in words:
         if word in keywords:
-            reaction = keywords.get_entry(word)
-            if isinstance(reaction, list):
-                for r in reaction:
-                    logger.info("Reacting with {}".format(r))
-                    await client.add_reaction(message, r)
-            else:
+            reactions = keywords.get_entry(word)
+            for reaction in reactions:
                 logger.info("Reacting with {}".format(reaction))
                 await client.add_reaction(message, reaction)
-
             stats['keywords seen'] += 1
 
 ### EVENT HANDLERS ###
