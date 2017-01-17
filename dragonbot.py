@@ -331,7 +331,7 @@ Commands:
   deletekeyword : Alias for `removekeyword`.
   emotes        : Show a list of known emotes.
   help          : Show this help message.
-  insult        : Insult someone. (Not implemented yet.)
+  insult        : Insult someone.
   removeemote   : Remove an emote.
   removekeyword : Remove a keyword.
   say           : Post a message in a given channel. Owner only.
