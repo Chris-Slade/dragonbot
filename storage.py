@@ -58,14 +58,21 @@ class Storage(object):
         if key in self.entries:
             del self.entries[key]
         else:
-            raise KeyError('Emote not found')
+            raise KeyError('Key not found')
 
     def get_entry(self, key):
         key = Storage._normalize_key(key)
         if key in self.entries:
             return self.entries[key]
         else:
-            raise KeyError('Emote not found')
+            raise KeyError('Key not found')
+
+    def replace_entry(self, key, value):
+        key = Storage._normalize_key(key)
+        if key in self.entries:
+            self.entries[key] = value
+        else:
+            raise KeyError('Key not found')
 
     def get_entries(self):
         return self.entries.keys()

@@ -21,7 +21,7 @@ from storage import Storage, KeyExistsError
 from insult import random_insult, get_insult
 import util
 
-__version__ = '0.12.1'
+__version__ = '0.13.0'
 
 ### ARGUMENTS ###
 
@@ -397,27 +397,26 @@ async def add_keyword(message, argstr):
         emote = match.group(1)
 
     # Assume an emoji is correct and just store it
-    try:
+    if name in keywords:
+        other = keywords.get_entry(name)
+        if isinstance(other, list):
+            other.append(emote)
+        else:
+            keywords.replace_entry(name, [other, emote])
+    else:
         keywords.add_entry(name, emote)
-        keywords.save()
-        await client.send_message(
-            message.channel,
-            'Added keyword reaction!'
+    keywords.save()
+    await client.send_message(
+        message.channel,
+        'Added keyword reaction!'
+    )
+    logger.info(
+        '{} added keyword "{}" -> "{}"'.format(
+            message.author.name,
+            name,
+            emote
         )
-        logger.info(
-            '{} added keyword "{}" -> "{}"'.format(
-                message.author.name,
-                name,
-                emote
-            )
-        )
-    except KeyExistsError:
-        await client.send_message(
-            message.channel,
-            'That keyword already has a reaction, you {}.'.format(
-                random_insult()
-            )
-        )
+    )
 
 @not_read_only
 async def remove_keyword(message, argstr):
@@ -536,8 +535,14 @@ async def on_message(message):
     for word in words:
         if word in keywords:
             reaction = keywords.get_entry(word)
-            logger.info("Reacting with {}".format(reaction))
-            await client.add_reaction(message, reaction)
+            if isinstance(reaction, list):
+                for r in reaction:
+                    logger.info("Reacting with {}".format(r))
+                    await client.add_reaction(message, r)
+            else:
+                logger.info("Reacting with {}".format(reaction))
+                await client.add_reaction(message, reaction)
+
             stats['keywords seen'] += 1
 
 ### RUN ###
