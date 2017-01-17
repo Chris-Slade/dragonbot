@@ -4,6 +4,7 @@ from __future__ import (
     unicode_literals,
     division
 )
+import ahocorasick
 import argparse
 import asyncio
 import atexit
@@ -452,15 +453,39 @@ async def insult(message, argstr):
             "{}: {}".format(name, insult)
         )
 
-async def do_keyword_reactions(message):
-    words = util.remove_punctuation(message.clean_content).casefold().split()
-    for word in words:
-        if word in keywords:
-            reactions = keywords.get_entry(word)
-            for reaction in reactions:
-                logger.info("Reacting with %s", reaction)
+async def do_keyword_reactions(message=None, update_automaton=False):
+    try:
+        getattr(do_keyword_reactions, '_automaton')
+    except AttributeError:
+        update_automaton = True
+
+    if update_automaton:
+        # Make a new Aho-Corasick automaton
+        do_keyword_reactions._automaton = ahocorasick.Automaton(str)
+        # Add each keyword
+        for keyword in keywords.get_entries():
+            do_keyword_reactions._automaton.add_word(keyword, keyword)
+        # Finalize the automaton for searching
+        do_keyword_reactions._automaton.make_automaton()
+
+    # In case we were called just to update the automaton
+    if message is None:
+        return
+
+    content = message.clean_content.casefold()
+    for index, keyword in do_keyword_reactions._automaton.iter(content):
+        reactions = keywords.get_entry(keyword)
+        for reaction in reactions:
+            logger.info("Reacting with {}".format(reaction))
+            try:
                 await client.add_reaction(message, reaction)
-            stats['keywords seen'] += 1
+            except discord.HTTPException as e:
+                logger.exception(
+                    'Error reacting to keyword "%s" with "%s"',
+                    keyword,
+                    reaction
+                )
+        stats['keywords seen'] += 1
 
 ### EVENT HANDLERS ###
 
