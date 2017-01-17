@@ -527,7 +527,8 @@ async def on_message(message):
             await client.send_message(message.channel, emotes.get_entry(emote))
             stats['emotes seen'] += 1
         except KeyError:
-            pass
+            await client.add_reaction(message, '❔')
+
     # Check for keywords
     words = util.remove_punctuation(message.clean_content).casefold().split()
     for word in words:
