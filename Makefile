@@ -11,3 +11,6 @@ compile:
 
 lint:
 	pylint $(SRC) --rcfile=pylint.rc $(foreach i, $(PYLINT_IGNORE), -d $i)
+
+tags: $(SRC)
+	ctags $(SRC)
