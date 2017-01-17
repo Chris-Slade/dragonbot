@@ -18,10 +18,10 @@ import sys
 import time
 
 from storage import Storage, KeyExistsError
-from insult import random_insult
+from insult import random_insult, get_insult
 import util
 
-__version__ = '0.11.2'
+__version__ = '0.12.0'
 
 ### ARGUMENTS ###
 
@@ -138,6 +138,7 @@ def init():
         "deletekeyword" : remove_keyword,
         "emotes"        : list_emotes,
         "help"          : show_help,
+        "insult"        : insult,
         "keywords"      : list_keywords,
         "refreshemotes" : refresh_emotes,
         "removeemote"   : remove_emote,
@@ -436,6 +437,20 @@ async def remove_keyword(message, argstr):
         await client.send_message(
             message.channel,
             "That keyword doesn't exist!"
+        )
+
+async def insult(message, argstr):
+    name = argstr
+    insult = get_insult()
+    if insult is None:
+        await client.send_message(
+            message.channel,
+            "Error retrieving insult."
+        )
+    else:
+        await client.send_message(
+            message.channel,
+            "{}: {}".format(name, insult)
         )
 
 ### EVENT HANDLERS ###
