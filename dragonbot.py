@@ -21,7 +21,7 @@ from storage import Storage, KeyExistsError
 from insult import random_insult, get_insult
 import util
 
-__version__ = '0.12.0'
+__version__ = '0.12.1'
 
 ### ARGUMENTS ###
 
@@ -399,6 +399,7 @@ async def add_keyword(message, argstr):
     # Assume an emoji is correct and just store it
     try:
         keywords.add_entry(name, emote)
+        keywords.save()
         await client.send_message(
             message.channel,
             'Added keyword reaction!'
@@ -423,6 +424,7 @@ async def remove_keyword(message, argstr):
     name = argstr
     try:
         keywords.remove_entry(name)
+        keywords.save()
         await client.send_message(
             message.channel,
             'Removed keyword reaction!'
