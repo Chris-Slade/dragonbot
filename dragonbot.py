@@ -28,13 +28,13 @@ __version__ = '0.13.1'
 
 def getopts():
     defaults = {
-        'config'    : 'config.json',
-        'debug'     : False,
-        'emotes'    : 'emotes.json',
-        'keywords'  : 'keywords.json',
-        'greet'     : True,
-        'log'       : 'INFO',
-        'ro-emotes' : False,
+        'config'     : 'config.json',
+        'emotes'     : 'emotes.json',
+        'global-log' : 'WARNING',
+        'greet'      : True,
+        'keywords'   : 'keywords.json',
+        'log'        : 'INFO',
+        'read-only'  : False,
     }
     parser = argparse.ArgumentParser(description='Discord chat bot')
     parser.set_defaults(**defaults)
@@ -44,17 +44,16 @@ def getopts():
         help='Specify the configuration file to use.'
     )
     parser.add_argument(
-        '-d', '--debug',
-        dest='debug',
-        action='store_true',
-        help='Enable DEBUG-level logging. Differs from `--log DEBUG` in that'
-            'it only enables this level on the main class, rather than for'
-            'all modules.'
-    )
-    parser.add_argument(
         '-e', '--emotes',
         type=str,
         help='Specify the emotes file to use.'
+    )
+    parser.add_argument(
+        '--global-log',
+        type=str,
+        help='Set the logging level for all modules to the given level. Can be'
+            ' one of (from least to most verbose):'
+            ' DEBUG, INFO, WARNING, ERROR, CRITICAL'
     )
     parser.add_argument(
         '--greet',
@@ -77,25 +76,24 @@ def getopts():
     parser.add_argument(
         '-l', '--log',
         type=str,
-        help='Set the logging level for all modules to the given level. Can be'
-            ' one of (from least to most verbose):'
-            ' DEBUG, INFO, WARNING, ERROR, CRITICAL'
+        help='Set the logging level for only the main module. Takes the same'
+            ' values as `--global-log`.'
     )
     parser.add_argument(
         '--read-only',
-        action='store_true'
+        action='store_true',
         help='Run the bot in read-only mode, preventing functions that access'
             ' the disk from doing so.'
     )
     opts = parser.parse_args()
-    try:
-        log_level = getattr(logging, opts.log)
-        if not isinstance(log_level, int):
-            raise AttributeError
-        opts.log_level = log_level
-    except AttributeError:
-        print('Unknown log level "{}", defaulting to INFO'.format(opts.log))
-        opts.log_level = logging.INFO
+
+    opts.global_log = util.get_log_level(getattr(opts, 'global-log'))
+    if getattr(opts, 'global-log') is None:
+        opts.global_log = util.get_log_level(defaults['global-log'])
+    opts.log = util.get_log_level(getattr(opts, 'log'))
+    if getattr(opts, 'log') is None:
+        opts.log = util.get_log_level(defaults['log'])
+
     return opts
 
 ### INITIALIZATION ###
@@ -120,7 +118,7 @@ def init():
 
     # Initialize logger
     logging.basicConfig(
-        level=opts.log_level,
+        level=opts.global_log,
         format=' | '.join([
             '%(asctime)s',
             '%(levelname)s',
@@ -130,9 +128,12 @@ def init():
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     logger = logging.getLogger(__name__)
-    if opts.debug:
-        logger.setLevel(logging.DEBUG)
-        logger.info('Set logging level to DEBUG')
+    logger.setLevel(opts.log)
+    logger.info(
+        'Set logging level to %s, global level to %s',
+        opts.log,
+        opts.global_log
+    )
 
     def log_exit():
         logger.info('Exiting')
