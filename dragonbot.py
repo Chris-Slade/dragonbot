@@ -22,7 +22,7 @@ from storage import Storage, KeyExistsError
 from insult import random_insult, get_insult
 import util
 
-__version__ = '0.13.0'
+__version__ = '0.13.1'
 
 ### ARGUMENTS ###
 
@@ -74,11 +74,11 @@ def getopts():
     opts = parser.parse_args()
     try:
         log_level = getattr(logging, opts.log)
-        if isinstance(log_level, int):
+        if not isinstance(log_level, int):
             raise AttributeError
         opts.log_level = log_level
     except AttributeError:
-        print('Unknown log level, defaulting to INFO')
+        print('Unknown log level "{}", defaulting to INFO'.format(opts.log))
         opts.log_level = logging.INFO
     return opts
 
