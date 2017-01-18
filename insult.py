@@ -10,8 +10,6 @@ import urllib
 import urllib.request
 from html.parser import HTMLParser
 
-from pprint import pprint
-
 class GetInsult(HTMLParser):
     def __init__(self):
         self.done = False
