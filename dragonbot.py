@@ -503,7 +503,7 @@ async def do_keyword_reactions(message=None, update_automaton=False):
             keyword
         )
         for reaction in reactions:
-            logger.info("Reacting with {}".format(reaction))
+            logger.info('Reacting with "%s"', reaction)
             try:
                 await client.add_reaction(message, reaction)
             except discord.HTTPException as e:
