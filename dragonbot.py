@@ -523,10 +523,10 @@ async def on_ready():
         logger.warning("Couldn't find server")
     # Print list of servers and channels
     for server in client.servers:
-        print(' '*4, server.name, ' ', server.id)
+        logger.info('Server: %s %s', server.name, server.id)
         for channel in server.channels:
             if channel.type == discord.ChannelType.text:
-                print(' '*8, channel.name, ' ', channel.id)
+                logger.info('Channel: %s %s', channel.name, channel.id)
 
 @client.event
 async def on_message(message):
