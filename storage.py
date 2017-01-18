@@ -6,7 +6,7 @@ import os
 class KeyExistsError(Exception):
     pass
 
-class Storage(object):
+class Storage(dict):
 
     def __init__(self, file):
         self.file = file
@@ -14,68 +14,54 @@ class Storage(object):
         self.load(file)
         atexit.register(self.save)
 
-    def __len__(self):
-        return len(self.entries)
-
-    def __contains__(self, key):
-        return key in self.entries
-
     def load(self, file=None):
         if file is None:
             file = self.file
         self.file = file
         if not os.path.isfile(file):
-            self.logger.info('Creating new entries file')
+            self.logger.info('Creating new entries file "%s"', self.file)
             with open(file, 'x') as fh:
                 fh.writelines(["{}"])
         with open(file, 'r', encoding='utf-8') as fh:
-            self.entries = json.load(fh)
-        if not isinstance(self.entries, dict):
-            self.logger.warning(
-                'Expected dict from JSON file, '
-                'got {}'.format(type(self.entries))
-            )
+            self.clear()
+            self.update(json.load(fh)) # Add all entries from file
+        logging.info('Loaded entries from "%s"', self.file)
 
     def save(self):
         self.logger.info('Saving entries')
+        if (
+            len(self) == 0
+            and os.path.isfile(self.file)
+            and os.path.getsize(self.file) <= 2
+        ):
+            self.logger.warn(
+                'Refusing to overwrite file "%s" with empty Storage',
+                self.file
+            )
+            return
+
         with open(self.file, 'w') as fh:
             json.dump(
-                self.entries,
+                self,
                 fh,
                 indent=4,
                 separators=(',', ' : '),
                 sort_keys=True
             )
 
-    def add_entry(self, key, value):
+    def __setitem__(self, key, value):
         key = Storage._normalize_key(key)
-        if key not in self.entries:
-            self.entries[key] = value
-        else:
-            raise KeyExistsError('Key already exists')
+        logger.info('Set "%s" to "%s"', key, value)
+        return super().__setitem__(key, value)
 
-    def remove_entry(self, key):
-        if key in self.entries:
-            del self.entries[key]
-        else:
-            raise KeyError('Key not found')
-
-    def get_entry(self, key):
+    def __getitem__(self, key):
         key = Storage._normalize_key(key)
-        if key in self.entries:
-            return self.entries[key]
-        else:
-            raise KeyError('Key not found')
+        return super().__getitem__(key)
 
-    def replace_entry(self, key, value):
+    def __delitem__(self, key):
         key = Storage._normalize_key(key)
-        if key in self.entries:
-            self.entries[key] = value
-        else:
-            raise KeyError('Key not found')
-
-    def get_entries(self):
-        return self.entries.keys()
+        logger.info('Deleted "%s"', key)
+        return super().__delitem__(key)
 
     def _normalize_key(key):
         return key.strip().casefold()

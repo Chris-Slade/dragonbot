@@ -237,7 +237,7 @@ async def list_stored_items(message, storage, items='items'):
             message.channel,
             "I don't have any {} yet!".format(items)
         )
-    item_list = ", ".join(sorted(storage.get_entries()))
+    item_list = ", ".join(sorted(storage))
     for chunk in util.chunker(item_list, 2000):
         await client.send_message(message.channel, chunk)
 
@@ -272,7 +272,7 @@ async def add_emote(message, argstr):
         return
 
     try:
-        emotes.add_entry(emote, body)
+        emotes[emote] = body
         emotes.save()
         logger.info(
             'Emote "%s" added by "%s"',
@@ -312,7 +312,7 @@ async def remove_emote(message, argstr):
 
     emote = argstr
     try:
-        emotes.remove_entry(emote)
+        del emotes[emote]
         emotes.save()
         logger.info(
             'Emote "%s" deleted by "%s"',
@@ -422,9 +422,9 @@ async def add_keyword(message, argstr):
 
     # Assume an emoji is correct and just store it
     if name in keywords:
-        keywords.get_entry(name).append(emote)
+        keywords[name].append(emote)
     else:
-        keywords.add_entry(name, [emote])
+        keywords[name] = [emote]
     keywords.save()
     await do_keyword_reactions(message=None, update_automaton=True)
     await client.send_message(
@@ -442,7 +442,7 @@ async def add_keyword(message, argstr):
 async def remove_keyword(message, argstr):
     name = argstr
     try:
-        keywords.remove_entry(name)
+        del keywords[name]
         keywords.save()
         await do_keyword_reactions(message=None, update_automaton=True)
         await client.send_message(
@@ -484,7 +484,7 @@ async def do_keyword_reactions(message=None, update_automaton=False):
         # Make a new Aho-Corasick automaton
         do_keyword_reactions._automaton = ahocorasick.Automaton(str)
         # Add each keyword
-        for keyword in keywords.get_entries():
+        for keyword in keywords:
             do_keyword_reactions._automaton.add_word(keyword, keyword)
         # Finalize the automaton for searching
         do_keyword_reactions._automaton.make_automaton()
@@ -495,7 +495,12 @@ async def do_keyword_reactions(message=None, update_automaton=False):
 
     content = message.clean_content.casefold()
     for index, keyword in do_keyword_reactions._automaton.iter(content):
-        reactions = keywords.get_entry(keyword)
+        reactions = keywords[keyword]
+        logging.debug(
+            'Got reactions [%s] for keyword "%s"',
+            ", ".join(reactions) if reactions is not None else "None",
+            keyword
+        )
         for reaction in reactions:
             logger.info("Reacting with {}".format(reaction))
             try:
@@ -580,7 +585,7 @@ async def on_message(message):
         logger.info('Handling emote message "%s"', message.clean_content)
         emote = message.clean_content[1:]
         try:
-            await client.send_message(message.channel, emotes.get_entry(emote))
+            await client.send_message(message.channel, emotes[emote])
             stats['emotes seen'] += 1
         except KeyError:
             await client.add_reaction(message, '❔')
