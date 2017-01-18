@@ -365,7 +365,7 @@ async def show_stats(message, argstr):
     for stat in sorted(stats.keys()):
         sb.append(stat_fmt.format(stat.title(), stats[stat]))
     sb.append("```")
-    stat_message = "\n".join(sb);
+    stat_message = "\n".join(sb)
     await client.send_message(message.channel, stat_message)
 
 @owner_only
