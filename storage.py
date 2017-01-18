@@ -13,6 +13,7 @@ class Storage(dict):
         self.logger = logging.getLogger(__name__)
         self.load(file)
         atexit.register(self.save)
+        super().__init__()
 
     def load(self, file=None):
         if file is None:
