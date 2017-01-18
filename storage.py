@@ -6,6 +6,9 @@ import os
 class KeyExistsError(Exception):
     pass
 
+def _normalize_key(key):
+    return key.strip().casefold()
+
 class Storage(dict):
 
     def __init__(self, file):
@@ -51,18 +54,15 @@ class Storage(dict):
             )
 
     def __setitem__(self, key, value):
-        key = Storage._normalize_key(key)
+        key = _normalize_key(key)
         self.logger.info('Set "%s" to "%s"', key, value)
         return super().__setitem__(key, value)
 
     def __getitem__(self, key):
-        key = Storage._normalize_key(key)
+        key = _normalize_key(key)
         return super().__getitem__(key)
 
     def __delitem__(self, key):
-        key = Storage._normalize_key(key)
+        key = _normalize_key(key)
         self.logger.info('Deleted "%s"', key)
         return super().__delitem__(key)
-
-    def _normalize_key(key):
-        return key.strip().casefold()
