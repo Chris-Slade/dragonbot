@@ -407,6 +407,7 @@ async def add_keyword(message, argstr):
     else:
         keywords.add_entry(name, [emote])
     keywords.save()
+    await do_keyword_reactions(message=None, update_automaton=True)
     await client.send_message(
         message.channel,
         'Added keyword reaction!'
@@ -424,6 +425,7 @@ async def remove_keyword(message, argstr):
     try:
         keywords.remove_entry(name)
         keywords.save()
+        await do_keyword_reactions(message=None, update_automaton=True)
         await client.send_message(
             message.channel,
             'Removed keyword reaction!'
