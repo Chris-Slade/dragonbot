@@ -66,7 +66,7 @@ def getopts():
     parser.add_argument(
         '--no-greet',
         dest='greet',
-        action='store_false'
+        action='store_false',
         help='Tell the bot not to issue a greeting.'
     )
     parser.add_argument(
