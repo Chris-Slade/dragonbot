@@ -104,7 +104,13 @@ def init():
     # Initialize logger
     logging.basicConfig(
         level=opts.log_level,
-        format='%(asctime)-15s\t%(name)s\t%(levelname)s\t%(message)s'
+        format=' | '.join([
+            '%(asctime)s',
+            '%(levelname)s',
+            '%(module)s:%(funcName)s:%(lineno)d',
+            '%(message)s'
+        ]),
+        datefmt='%Y-%m-%d %H:%M:%S'
     )
     logger = logging.getLogger(__name__)
 
@@ -123,13 +129,13 @@ def init():
     if 'emotes_file' not in config:
         config['emotes_file'] = opts.emotes
     emotes = Storage(config['emotes_file'])
-    logger.info('Loaded {} emotes from disk'.format(len(emotes)))
+    logger.info('Loaded %d emotes from disk', len(emotes))
 
     # Initialize keywords
     if 'keywords_file' not in config:
         config['keywords_file'] = opts.keywords
     keywords = Storage(config['keywords_file'])
-    logger.info('Loaded {} keywords from disk'.format(len(keywords)))
+    logger.info('Loaded %d keywords from disk', len(keywords))
 
     commands = {
         "addemote"      : add_emote,
@@ -249,10 +255,9 @@ async def add_emote(message, argstr):
         emotes.add_entry(emote, body)
         emotes.save()
         logger.info(
-            'Emote "{}" added by "{}"'.format(
-                emote,
-                message.author.name
-            )
+            'Emote "%s" added by "%s"',
+            emote,
+            message.author.name
         )
         stats['emotes added'] += 1
         await client.send_message(
@@ -290,10 +295,9 @@ async def remove_emote(message, argstr):
         emotes.remove_entry(emote)
         emotes.save()
         logger.info(
-            'Emote "{}" deleted by "{}"'.format(
-                emote,
-                message.author.name
-            )
+            'Emote "%s" deleted by "%s"',
+            emote,
+            message.author.name
         )
         stats['emotes deleted'] += 1
         await client.send_message(
@@ -407,11 +411,10 @@ async def add_keyword(message, argstr):
         'Added keyword reaction!'
     )
     logger.info(
-        '{} added keyword "{}" -> "{}"'.format(
-            message.author.name,
-            name,
-            emote
-        )
+        '%s added keyword "%s" -> "%s"',
+        message.author.name,
+        name,
+        emote
     )
 
 @not_read_only
@@ -425,10 +428,9 @@ async def remove_keyword(message, argstr):
             'Removed keyword reaction!'
         )
         logger.info(
-            '{} removed keyword "{}"'.format(
-                message.author.name,
-                name
-            )
+            '%s removed keyword "%s"',
+            message.author.name,
+            name
         )
     except KeyError:
         await client.send_message(
@@ -456,7 +458,7 @@ async def do_keyword_reactions(message):
         if word in keywords:
             reactions = keywords.get_entry(word)
             for reaction in reactions:
-                logger.info("Reacting with {}".format(reaction))
+                logger.info("Reacting with %s", reaction)
                 await client.add_reaction(message, reaction)
             stats['keywords seen'] += 1
 
@@ -471,15 +473,15 @@ async def on_ready():
 
     if server is not None:
         # Log server and default channel
-        logger.info("Logged into server {}".format(server))
+        logger.info("Logged into server %s", server)
         if server.default_channel is not None:
-            logger.info("Default channel is {}".format(server.default_channel))
+            logger.info("Default channel is %s", server.default_channel)
 
         # Collect server emoji
         server_emoji = {}
         for emoji in client.get_all_emojis():
             server_emoji[emoji.name] = emoji
-        logger.info('Got {} emoji in this server'.format(len(server_emoji)))
+        logger.info('Got %d emoji in this server', len(server_emoji))
         logger.debug(', '.join(server_emoji.keys()))
         # Post a greeting
         if opts.greet:
@@ -508,13 +510,13 @@ async def on_message(message):
         if message.content == '!':
             logger.info('Ignoring null command')
             return
-        logger.info('Handling command message "' + message.content + '"')
+        logger.info('Handling command message "%s"', message.content)
         split = message.content[1:].split(maxsplit=1)
         command = split[0] if len(split) >= 1 else None
         argstr  = split[1] if len(split) >= 2 else None
 
         if command is None:
-            logger.warning('Mishandled command message: "{}"'.format(message.content))
+            logger.warning('Mishandled command message "%s"', message.content)
 
         if command in commands:
             stats['commands seen'] += 1
@@ -522,13 +524,14 @@ async def on_message(message):
                 await commands[command](message, argstr)
             except TypeError as e:
                 logger.exception(
-                    'Failed to execute command "{}"'.format(command),
+                    'Failed to execute command "%s"',
+                    command,
                     exc_info=e
                 )
         else:
-            logger.info('Ignoring unknown command "{}"'.format(command))
+            logger.info('Ignoring unknown command "%s"', command)
     elif message.clean_content.startswith('@'):
-        logger.info('Handling emote message "' + message.clean_content + '"')
+        logger.info('Handling emote message "%s"', message.clean_content)
         emote = message.clean_content[1:]
         try:
             await client.send_message(message.channel, emotes.get_entry(emote))
