@@ -41,12 +41,14 @@ def getopts():
     parser.add_argument(
         '-l', '--log',
         type=str,
-        help='The logging level.'
+        help='Set the logging level for all modules to the given level. Can be'
+            ' one of (from least to most verbose):'
+            ' DEBUG, INFO, WARNING, ERROR, CRITICAL'
     )
     parser.add_argument(
         '-c', '--config',
         type=str,
-        help='Configuration file to use.'
+        help='Specify the configuration file to use.'
     )
     parser.add_argument(
         '-d', '--debug',
@@ -59,26 +61,31 @@ def getopts():
     parser.add_argument(
         '-e', '--emotes',
         type=str,
-        help='Emotes file to use.'
+        help='Specify the emotes file to use.'
     )
     parser.add_argument(
         '-k', '--keywords',
         type=str,
-        help='Keywords file to use.'
+        help='Specify the keywords file to use.'
     )
     parser.add_argument(
         '--greet',
         dest='greet',
-        action='store_true'
+        action='store_true',
+        help='Tell the bot to issue a greeting to the greeting channel given'
+            ' in the configuration file.'
     )
     parser.add_argument(
         '--no-greet',
         dest='greet',
         action='store_false'
+        help='Tell the bot not to issue a greeting.'
     )
     parser.add_argument(
         '--read-only',
         action='store_true'
+        help='Run the bot in read-only mode, preventing functions that access'
+            ' the disk from doing so.'
     )
     opts = parser.parse_args()
     try:
