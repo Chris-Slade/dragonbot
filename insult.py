@@ -1,6 +1,5 @@
-"""
-A module for DragonBot that gives it the ability to insult people in various
-ways.
+"""A module for DragonBot that gives it the ability to insult people in
+various ways.
 """
 
 import codecs
@@ -50,8 +49,7 @@ def get_content(url):
     return str(urllib.request.urlopen(url).read(), encoding='utf-8')
 
 def random_insult(insults_file='insults.json'):
-    '''
-    Random insults that the bot calls people who fail to use its
+    """Random insults that the bot calls people who fail to use its
     commands properly.
 
     These are loaded from a JSON file specified by the `insults_file` in
@@ -63,7 +61,7 @@ def random_insult(insults_file='insults.json'):
     The `encoding` field is to allow obfuscation of the insults, e.g.
     with `rot_13`. The strings themselves must be encoded as UTF-8 text,
     in accordance with RFC 7159.
-    '''
+    """
     if not hasattr(random_insult, '_cache'):
         with open(insults_file, 'r', encoding='utf-8') as fh:
             obj = json.load(fh)

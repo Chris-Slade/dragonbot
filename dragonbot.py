@@ -193,9 +193,8 @@ def version():
     )
 
 def owner_only(command):
-    u"""
-    Makes a command usable by the owner only, sending a message if someone else
-    tries to call it.
+    """Makes a command usable by the owner only, sending a message if
+    someone else tries to call it.
     """
     @functools.wraps(command)
     async def wrapper(message, argstr):
@@ -209,9 +208,8 @@ def owner_only(command):
     return wrapper
 
 def not_read_only(command):
-    u"""
-    Makes a command respect the --read-only option, returning without executing
-    it if the option is enabled.
+    """Makes a command respect the --read-only option, returning without
+    executing it if the option is enabled.
     """
     @functools.wraps(command)
     async def wrapper(message, argstr):
