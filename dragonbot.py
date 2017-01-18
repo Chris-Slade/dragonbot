@@ -22,7 +22,7 @@ from storage import Storage, KeyExistsError
 from insult import random_insult, get_insult
 import util
 
-__version__ = '0.13.1'
+__version__ = '0.13.2'
 
 ### ARGUMENTS ###
 

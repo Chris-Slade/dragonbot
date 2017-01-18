@@ -52,7 +52,7 @@ class Storage(dict):
 
     def __setitem__(self, key, value):
         key = Storage._normalize_key(key)
-        logger.info('Set "%s" to "%s"', key, value)
+        self.logger.info('Set "%s" to "%s"', key, value)
         return super().__setitem__(key, value)
 
     def __getitem__(self, key):
@@ -61,7 +61,7 @@ class Storage(dict):
 
     def __delitem__(self, key):
         key = Storage._normalize_key(key)
-        logger.info('Deleted "%s"', key)
+        self.logger.info('Deleted "%s"', key)
         return super().__delitem__(key)
 
     def _normalize_key(key):
