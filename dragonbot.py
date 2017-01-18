@@ -39,13 +39,6 @@ def getopts():
     parser = argparse.ArgumentParser(description='Discord chat bot')
     parser.set_defaults(**defaults)
     parser.add_argument(
-        '-l', '--log',
-        type=str,
-        help='Set the logging level for all modules to the given level. Can be'
-            ' one of (from least to most verbose):'
-            ' DEBUG, INFO, WARNING, ERROR, CRITICAL'
-    )
-    parser.add_argument(
         '-c', '--config',
         type=str,
         help='Specify the configuration file to use.'
@@ -64,11 +57,6 @@ def getopts():
         help='Specify the emotes file to use.'
     )
     parser.add_argument(
-        '-k', '--keywords',
-        type=str,
-        help='Specify the keywords file to use.'
-    )
-    parser.add_argument(
         '--greet',
         dest='greet',
         action='store_true',
@@ -80,6 +68,18 @@ def getopts():
         dest='greet',
         action='store_false'
         help='Tell the bot not to issue a greeting.'
+    )
+    parser.add_argument(
+        '-k', '--keywords',
+        type=str,
+        help='Specify the keywords file to use.'
+    )
+    parser.add_argument(
+        '-l', '--log',
+        type=str,
+        help='Set the logging level for all modules to the given level. Can be'
+            ' one of (from least to most verbose):'
+            ' DEBUG, INFO, WARNING, ERROR, CRITICAL'
     )
     parser.add_argument(
         '--read-only',
