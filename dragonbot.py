@@ -29,6 +29,7 @@ __version__ = '0.13.1'
 def getopts():
     defaults = {
         'config'    : 'config.json',
+        'debug'     : False,
         'emotes'    : 'emotes.json',
         'keywords'  : 'keywords.json',
         'greet'     : True,
@@ -46,6 +47,14 @@ def getopts():
         '-c', '--config',
         type=str,
         help='Configuration file to use.'
+    )
+    parser.add_argument(
+        '-d', '--debug',
+        dest='debug',
+        action='store_true',
+        help='Enable DEBUG-level logging. Differs from `--log DEBUG` in that'
+            'it only enables this level on the main class, rather than for'
+            'all modules.'
     )
     parser.add_argument(
         '-e', '--emotes',
@@ -114,6 +123,9 @@ def init():
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     logger = logging.getLogger(__name__)
+    if opts.debug:
+        logger.setLevel(logging.DEBUG)
+        logger.info('Set logging level to DEBUG')
 
     def log_exit():
         logger.info('Exiting')
