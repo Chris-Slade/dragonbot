@@ -1,9 +1,3 @@
-from __future__ import (
-    print_function,
-    absolute_import,
-    unicode_literals,
-    division
-)
 import ahocorasick
 import argparse
 import asyncio
