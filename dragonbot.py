@@ -197,14 +197,14 @@ def owner_only(command):
     someone else tries to call it.
     """
     @functools.wraps(command)
-    async def wrapper(message, argstr):
+    async def wrapper(message):
         if message.author.id != config['owner_id']:
             await client.send_message(
                 message.channel,
                 'Go away, this is for {}.'.format(config['owner_name'])
             )
         else:
-            await command(message, argstr)
+            await command(message)
     return wrapper
 
 def not_read_only(command):
@@ -212,15 +212,25 @@ def not_read_only(command):
     executing it if the option is enabled.
     """
     @functools.wraps(command)
-    async def wrapper(message, argstr):
+    async def wrapper(message):
         if opts.read_only:
             await client.send_message(
                 message.channel,
                 "I'm in read-only mode."
             )
         else:
-            await command(message, argstr)
+            await command(message)
     return wrapper
+
+def split_command(message):
+    """Split a command message.
+
+    E.g., split_command("!test foo bar") will return ("!test", "foo bar").
+    """
+    split = message.content[1:].split(maxsplit=1)
+    command = split[0] if len(split) >= 1 else None
+    argstr  = split[1] if len(split) >= 2 else None
+    return command, argstr
 
 ### COMMANDS ###
 
@@ -234,14 +244,15 @@ async def list_stored_items(message, storage, items='items'):
     for chunk in util.chunker(item_list, 2000):
         await client.send_message(message.channel, chunk)
 
-async def list_emotes(message, argstr):
+async def list_emotes(message):
     await list_stored_items(message, emotes, 'emotes')
 
-async def list_keywords(message, argstr):
+async def list_keywords(message):
     await list_stored_items(message, keywords, 'keywords')
 
 @not_read_only
-async def add_emote(message, argstr):
+async def add_emote(message):
+    command, argstr = split_command(message)
     try:
         if argstr is None:
             raise ValueError('No arguments')
@@ -285,7 +296,8 @@ async def add_emote(message, argstr):
         )
 
 @not_read_only
-async def remove_emote(message, argstr):
+async def remove_emote(message):
+    command, argstr = split_command(message)
     if argstr is None:
         await client.send_message(
             message.channel,
@@ -320,10 +332,10 @@ async def remove_emote(message, argstr):
             )
         )
 
-async def truth(message, argstr):
+async def truth(message):
     await client.send_message(message.channel, 'slushrfggts')
 
-async def show_help(message, argstr):
+async def show_help(message):
     await client.send_message(
         message.channel,
 '''```
@@ -352,12 +364,12 @@ Commands:
     )
 
 @owner_only
-async def test(message, argstr):
+async def test(message):
     logger.info(message.content)
     logger.info(message.clean_content)
     await client.add_reaction(message, 'pride:266322418887294976')
 
-async def show_stats(message, argstr):
+async def show_stats(message):
     stats['uptime']         = time.time() - stats['start time']
     stats['emotes known']   = len(emotes)
     stats['keywords known'] = len(keywords)
@@ -374,7 +386,8 @@ async def show_stats(message, argstr):
     await client.send_message(message.channel, stat_message)
 
 @owner_only
-async def say(message, argstr):
+async def say(message):
+    command, argstr = split_command(message)
     try:
         channel_id, user_message = argstr.split(maxsplit=1)
     except ValueError:
@@ -390,12 +403,13 @@ async def say(message, argstr):
         await client.send_message(message.channel, "Couldn't find channel.")
 
 @owner_only
-async def refresh_emotes(message, argstr):
+async def refresh_emotes(message):
     emotes.load(config['emotes_file'])
     await client.send_message(message.channel, 'Emotes refreshed!')
 
 @not_read_only
-async def add_keyword(message, argstr):
+async def add_keyword(message):
+    command, argstr = split_command(message)
     try:
         name, emote = argstr.split(maxsplit=1)
     except:
@@ -425,8 +439,8 @@ async def add_keyword(message, argstr):
     )
 
 @not_read_only
-async def remove_keyword(message, argstr):
-    name = argstr
+async def remove_keyword(message):
+    command, name = split_command(message)
     try:
         del keywords[name]
         keywords.save()
@@ -447,7 +461,7 @@ async def remove_keyword(message, argstr):
         )
 
 async def insult(message, argstr):
-    name = argstr
+    command, name = split_command(message)
     insult = get_insult()
     if insult is None:
         await client.send_message(
@@ -548,9 +562,8 @@ async def on_message(message):
             logger.info('Ignoring null command')
             return
         logger.info('Handling command message "%s"', message.content)
-        split = message.content[1:].split(maxsplit=1)
-        command = split[0] if len(split) >= 1 else None
-        argstr  = split[1] if len(split) >= 2 else None
+
+        command, _ = split_command(message)
 
         if command is None:
             logger.warning('Mishandled command message "%s"', message.content)
@@ -558,7 +571,7 @@ async def on_message(message):
         if command in commands:
             stats['commands seen'] += 1
             try:
-                await commands[command](message, argstr)
+                await commands[command](message)
             except TypeError as e:
                 logger.exception(
                     'Failed to execute command "%s"',

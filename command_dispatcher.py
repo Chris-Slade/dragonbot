@@ -25,9 +25,8 @@ class CommandDispatcher(object):
             command_name -- The name of the command, which is the
                 that is dispatched on.
             command_func -- The function to call. It should take a
-                discord.Client client, a discord.Message, and a
-                string (the argument(s) to the message) as positional
-                parameters.
+                discord.Client client and a discord.Message as
+                positional parameters.
             may_use -- An object containing the IDs of users who are
                 permitted to use this function. The collection must
                 implement the __contains__ method.
