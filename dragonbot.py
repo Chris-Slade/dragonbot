@@ -201,15 +201,18 @@ Commands:
       bot. Because both emote names and the corresponding strings may
       contain whitespace, both must be surrounded by curly braces, as in
       the example.
-  addkeyword    : Add a keyword and a reaction. When the bot sees the keyword
-      in a message, it will react with the specified reaction.
+  addkeyword    : Add a keyword. The bot will count these keywords. In
+    addition, reactions may be given, which are automatically added to messages
+    containing keywords.
   deleteemote   : Alias for `removeemote`.
   deletekeyword : Alias for `removekeyword`.
   emotes        : Show a list of known emotes.
   help          : Show this help message.
   insult        : Insult someone.
   removeemote   : Remove an emote.
-  removekeyword : Remove a keyword.
+  removekeyword : Remove a keyword. WARNING: This removes a keyword with its
+      count and all associated reactions. There is currently not a way to
+      remove just a reaction to reset the counter in isolation.
   say           : Post a message in a given channel. Owner only.
   stats         : Show bot statistics.
   test          : For testing and debugging. For the bot owner's use only.
