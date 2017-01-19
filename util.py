@@ -34,3 +34,10 @@ def split_command(message):
     command = split[0] if len(split) >= 1 else None
     argstr  = split[1] if len(split) >= 2 else None
     return command, argstr
+
+def is_get(number):
+    if number in (123, 1234, 12345, 123456, 1234567, 12345678, 123456789):
+        return True
+    count = str(number)
+    if len(count) >= 2 and count[-1] == count[-2]:
+        return True

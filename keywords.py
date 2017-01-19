@@ -49,7 +49,18 @@ class Keywords(object):
 
         content = message.clean_content.casefold()
         for index, keyword in self.automaton.iter(content):
-            reactions = self.keywords[keyword]
+            # Count keyword
+            self.keywords[keyword]['count'] += 1
+            if util.is_get(self.keywords[keyword]['count']):
+                await client.send_message(
+                    message.channel,
+                    '{} #{}'.format(keyword,
+                    self.keywords[keyword]['count'])
+                )
+                self.keywords.save()
+
+            # Show reactions
+            reactions = self.keywords[keyword]['reactions']
             self.logger.debug(
                 'Got reactions [%s] for keyword "%s"',
                 ", ".join(reactions) if reactions is not None else "None",
@@ -71,10 +82,14 @@ class Keywords(object):
         try:
             name, emote = argstr.split(maxsplit=1)
         except:
-            await client.send_message(
-                message.channel,
-                'Need a keyword and emote.'
+            # If we just have a name, add it as a keyword with no reaction.
+            self.keywords[argstr] = { 'reactions' : [], 'count' : 0 }
+            self.logger.info(
+                '%s added keyword "%s"',
+                message.author.name,
+                argstr
             )
+            return
 
         # Try to extract a custom emoji's name and ID
         match = re.match(r'<:([^:]+:\d+)>', emote)
@@ -83,9 +98,9 @@ class Keywords(object):
 
         # Assume an emoji is correct and just store it
         if name in self.keywords:
-            self.keywords[name].append(emote)
+            self.keywords[name]['reactions'].append(emote)
         else:
-            self.keywords[name] = [emote]
+            self.keywords[name] = { 'reactions' : [emote], 'count' : 0 }
         self.keywords.save()
         await self.handle_keywords(message=None, update_automaton=True)
         await client.send_message(
@@ -107,7 +122,7 @@ class Keywords(object):
             await do_keyword_reactions(message=None, update_automaton=True)
             await client.send_message(
                 message.channel,
-                'Removed keyword reaction!'
+                'Removed keyword!'
             )
             self.logger.info(
                 '%s removed keyword "%s"',
