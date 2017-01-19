@@ -288,13 +288,6 @@ async def add_emote(message, argstr):
 
 @not_read_only
 async def remove_emote(message, argstr):
-    if opts.read_only:
-        logger.info('No emote removed, read-only enabled')
-        await client.send_message(
-            message.channel,
-            "I'm in read-only mode."
-        )
-        return
     if argstr is None:
         await client.send_message(
             message.channel,
