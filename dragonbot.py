@@ -12,8 +12,9 @@ import string
 import sys
 import time
 
-from storage import Storage, KeyExistsError
+from command_dispatcher import CommandDispatcher
 from insult import random_insult, get_insult
+from storage import Storage, KeyExistsError
 import util
 
 __version__ = '0.13.2'
@@ -96,15 +97,15 @@ loop   = asyncio.get_event_loop()
 client = discord.Client(loop=loop)
 
 def init():
-    global            \
-        client,       \
-        commands,     \
-        config,       \
-        emotes,       \
-        keywords,     \
-        logger,       \
-        opts,         \
-        server_emoji, \
+    global                  \
+        client,             \
+        command_dispatcher, \
+        config,             \
+        emotes,             \
+        keywords,           \
+        logger,             \
+        opts,               \
+        server_emoji,       \
         stats
 
     # Get options
@@ -152,23 +153,26 @@ def init():
     keywords = Storage(config['keywords_file'])
     logger.info('Loaded %d keywords from disk', len(keywords))
 
-    commands = {
-        "addemote"      : add_emote,
-        "addkeyword"    : add_keyword,
-        "deleteemote"   : remove_emote,
-        "deletekeyword" : remove_keyword,
-        "emotes"        : list_emotes,
-        "help"          : show_help,
-        "insult"        : insult,
-        "keywords"      : list_keywords,
-        "refreshemotes" : refresh_emotes,
-        "removeemote"   : remove_emote,
-        "removekeyword" : remove_keyword,
-        "say"           : say,
-        "stats"         : show_stats,
-        "test"          : test,
-        "truth"         : truth,
-    }
+    # Set up command dispatcher
+
+    owner_only = { config['owner_id'] } # For registering commands as owner-only
+    cd = CommandDispatcher(read_only=opts.read_only)
+    cd.register("addemote", add_emote, rw=True)
+    cd.register("addkeyword", add_keyword, rw=True)
+    cd.register("deleteemote", remove_emote, rw=True)
+    cd.register("deletekeyword", remove_keyword, rw=True)
+    cd.register("emotes", list_emotes)
+    cd.register("help", show_help)
+    cd.register("insult", insult)
+    cd.register("keywords", list_keywords)
+    cd.register("refreshemotes", refresh_emotes, may_use=owner_only)
+    cd.register("removeemote", remove_emote, rw=True)
+    cd.register("removekeyword", remove_keyword, rw=True)
+    cd.register("say", say, may_use=owner_only)
+    cd.register("stats", show_stats)
+    cd.register("test", test, may_use=owner_only, rw=True)
+    cd.register("truth", truth)
+    command_dispatcher = cd # Make global
 
     stats = collections.defaultdict(int)
 
@@ -192,36 +196,6 @@ def version():
         discord.__version__
     )
 
-def owner_only(command):
-    """Makes a command usable by the owner only, sending a message if
-    someone else tries to call it.
-    """
-    @functools.wraps(command)
-    async def wrapper(message):
-        if message.author.id != config['owner_id']:
-            await client.send_message(
-                message.channel,
-                'Go away, this is for {}.'.format(config['owner_name'])
-            )
-        else:
-            await command(message)
-    return wrapper
-
-def not_read_only(command):
-    """Makes a command respect the --read-only option, returning without
-    executing it if the option is enabled.
-    """
-    @functools.wraps(command)
-    async def wrapper(message):
-        if opts.read_only:
-            await client.send_message(
-                message.channel,
-                "I'm in read-only mode."
-            )
-        else:
-            await command(message)
-    return wrapper
-
 def split_command(message):
     """Split a command message.
 
@@ -244,14 +218,13 @@ async def list_stored_items(message, storage, items='items'):
     for chunk in util.chunker(item_list, 2000):
         await client.send_message(message.channel, chunk)
 
-async def list_emotes(message):
+async def list_emotes(client, message):
     await list_stored_items(message, emotes, 'emotes')
 
-async def list_keywords(message):
+async def list_keywords(client, message):
     await list_stored_items(message, keywords, 'keywords')
 
-@not_read_only
-async def add_emote(message):
+async def add_emote(client, message):
     command, argstr = split_command(message)
     try:
         if argstr is None:
@@ -295,8 +268,7 @@ async def add_emote(message):
             'That emote already exists, {}.'.format(random_insult())
         )
 
-@not_read_only
-async def remove_emote(message):
+async def remove_emote(client, message):
     command, argstr = split_command(message)
     if argstr is None:
         await client.send_message(
@@ -332,10 +304,10 @@ async def remove_emote(message):
             )
         )
 
-async def truth(message):
+async def truth(client, message):
     await client.send_message(message.channel, 'slushrfggts')
 
-async def show_help(message):
+async def show_help(client, message):
     await client.send_message(
         message.channel,
 '''```
@@ -363,13 +335,12 @@ Commands:
 ```'''.format(version())
     )
 
-@owner_only
-async def test(message):
+async def test(client, message):
     logger.info(message.content)
     logger.info(message.clean_content)
     await client.add_reaction(message, 'pride:266322418887294976')
 
-async def show_stats(message):
+async def show_stats(client, message):
     stats['uptime']         = time.time() - stats['start time']
     stats['emotes known']   = len(emotes)
     stats['keywords known'] = len(keywords)
@@ -385,8 +356,7 @@ async def show_stats(message):
     stat_message = "\n".join(sb)
     await client.send_message(message.channel, stat_message)
 
-@owner_only
-async def say(message):
+async def say(client, message):
     command, argstr = split_command(message)
     try:
         channel_id, user_message = argstr.split(maxsplit=1)
@@ -402,13 +372,11 @@ async def say(message):
     else:
         await client.send_message(message.channel, "Couldn't find channel.")
 
-@owner_only
-async def refresh_emotes(message):
+async def refresh_emotes(client, message):
     emotes.load(config['emotes_file'])
     await client.send_message(message.channel, 'Emotes refreshed!')
 
-@not_read_only
-async def add_keyword(message):
+async def add_keyword(client, message):
     command, argstr = split_command(message)
     try:
         name, emote = argstr.split(maxsplit=1)
@@ -438,8 +406,7 @@ async def add_keyword(message):
         emote
     )
 
-@not_read_only
-async def remove_keyword(message):
+async def remove_keyword(client, message):
     command, name = split_command(message)
     try:
         del keywords[name]
@@ -563,23 +530,29 @@ async def on_message(message):
             return
         logger.info('Handling command message "%s"', message.content)
 
+        stats['commands seen'] += 1
+
         command, _ = split_command(message)
 
         if command is None:
             logger.warning('Mishandled command message "%s"', message.content)
 
-        if command in commands:
-            stats['commands seen'] += 1
-            try:
-                await commands[command](message)
-            except TypeError as e:
-                logger.exception(
-                    'Failed to execute command "%s"',
-                    command,
-                    exc_info=e
-                )
-        else:
-            logger.info('Ignoring unknown command "%s"', command)
+        assert command_dispatcher is not None
+
+        try:
+            await command_dispatcher.dispatch(client, command, message)
+            stats['commands run'] += 1
+        except (
+            CommandDispatcher.PermissionDenied,
+            CommandDispatcher.WriteDenied,
+            CommandDispatcher.UnknownCommand
+        ) as e:
+            await client.send_message(message.channel, str(e))
+            logger.info(
+                'Exception executing command "%s": %s',
+                command,
+                str(e)
+            )
     elif message.clean_content.startswith('@'):
         logger.info('Handling emote message "%s"', message.clean_content)
         emote = message.clean_content[1:]
