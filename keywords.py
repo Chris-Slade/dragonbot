@@ -22,7 +22,7 @@ class Keywords(object):
         cd.register("keywords",      self.list_keywords)
         self.logger.info('Registered commands')
 
-    async def update_automaton(self)
+    async def update_automaton(self):
         # Make a new Aho-Corasick automaton
         self.automaton = ahocorasick.Automaton(str)
         # Add each keyword
