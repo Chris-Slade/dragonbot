@@ -51,11 +51,12 @@ class Keywords(object):
         for index, keyword in self.automaton.iter(content):
             # Count keyword
             self.keywords[keyword]['count'] += 1
-            if util.is_get(self.keywords[keyword]['count']):
+            count = self.keywords[keyword]['count']
+            self.logger.info('Incremented count of "%s" to %d', keyword, count)
+            if util.is_get(count):
                 await client.send_message(
                     message.channel,
-                    '{} #{}'.format(keyword,
-                    self.keywords[keyword]['count'])
+                    '{} #{}'.format(keyword, count)
                 )
                 self.keywords.save()
 
