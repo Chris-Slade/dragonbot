@@ -42,6 +42,7 @@ class Keywords(object):
                 self.automaton.add_word(keyword, keyword)
             # Finalize the automaton for searching
             self.automaton.make_automaton()
+            self.logger.debug('Updated automaton')
 
         # In case we were called just to update the automaton
         if message is None:
@@ -85,6 +86,7 @@ class Keywords(object):
         except:
             # If we just have a name, add it as a keyword with no reaction.
             self.keywords[argstr] = { 'reactions' : [], 'count' : 0 }
+            await self.handle_keywords(message=None, update_automaton=True)
             self.logger.info(
                 '%s added keyword "%s"',
                 message.author.name,
