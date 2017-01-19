@@ -1,6 +1,7 @@
 import ahocorasick
 import discord
 import logging
+import re
 
 from storage import Storage
 import util
