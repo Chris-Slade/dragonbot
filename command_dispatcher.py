@@ -108,6 +108,7 @@ class CommandDispatcher(object):
                 'Cannot call read/write command in read-only mode'
             )
         # Call the command
+        assert command.func is not None
         return await command.func(client, message)
 
     def known_command_names(self):
