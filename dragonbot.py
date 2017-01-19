@@ -1,25 +1,21 @@
-import ahocorasick
 import argparse
 import asyncio
 import atexit
 import collections
 import discord
-import functools
 import json
 import logging
-import re
-import string
-import sys
 import time
 
 from command_dispatcher import CommandDispatcher
 from emotes import Emotes
 from insult import get_insult
+from keywords import Keywords
 from storage import Storage
 from util import split_command
 import util
 
-__version__ = '0.14.0'
+__version__ = '0.15.0'
 
 ### ARGUMENTS ###
 
@@ -151,23 +147,19 @@ def init():
     # Initialize keywords
     if 'keywords_file' not in config:
         config['keywords_file'] = opts.keywords
-    keywords = Storage(config['keywords_file'])
-    logger.info('Loaded %d keywords from disk', len(keywords))
+    keywords = Keywords(config['keywords_file'])
 
     # Set up command dispatcher
     owner_only = { config['owner_id'] } # For registering commands as owner-only
     cd = CommandDispatcher(read_only=opts.read_only)
-    cd.register("addkeyword", add_keyword, rw=True)
-    cd.register("deletekeyword", remove_keyword, rw=True)
     cd.register("help", show_help)
     cd.register("insult", insult)
-    cd.register("keywords", list_keywords)
-    cd.register("removekeyword", remove_keyword, rw=True)
     cd.register("say", say, may_use=owner_only)
     cd.register("stats", show_stats)
     cd.register("test", test, may_use=owner_only, rw=True)
     cd.register("truth", truth)
     emotes.register_commands(cd, config)
+    keywords.register_commands(cd, config)
     command_dispatcher = cd # Make global
 
     logger.debug(", ".join(cd.known_command_names()))
@@ -184,7 +176,7 @@ def main():
         client.run(config['credentials']['token'])
     except Exception:
         logging.error("Exception reached main()")
-        sys.exit(1)
+        return
 
 def version():
     return 'DragonBot v{} (discord.py v{})'.format(
@@ -193,15 +185,6 @@ def version():
     )
 
 ### COMMANDS ###
-
-async def list_keywords(client, message):
-    if len(keywords) == 0:
-        await client.send_message(
-            message.channel,
-            "I don't have any keywords yet!"
-        )
-    for chunk in util.chunker(keywords.as_text_list(), 2000):
-        await client.send_message(message.channel, chunk)
 
 async def truth(client, message):
     await client.send_message(message.channel, 'slushrfggts')
@@ -271,57 +254,6 @@ async def say(client, message):
     else:
         await client.send_message(message.channel, "Couldn't find channel.")
 
-async def add_keyword(client, message):
-    command, argstr = split_command(message)
-    try:
-        name, emote = argstr.split(maxsplit=1)
-    except:
-        await client.send_message(message.channel, 'Need a keyword and emote.')
-
-    # Try to extract a custom emoji's name and ID
-    match = re.match(r'<:([^:]+:\d+)>', emote)
-    if match:
-        emote = match.group(1)
-
-    # Assume an emoji is correct and just store it
-    if name in keywords:
-        keywords[name].append(emote)
-    else:
-        keywords[name] = [emote]
-    keywords.save()
-    await do_keyword_reactions(message=None, update_automaton=True)
-    await client.send_message(
-        message.channel,
-        'Added keyword reaction!'
-    )
-    logger.info(
-        '%s added keyword "%s" -> "%s"',
-        message.author.name,
-        name,
-        emote
-    )
-
-async def remove_keyword(client, message):
-    command, name = split_command(message)
-    try:
-        del keywords[name]
-        keywords.save()
-        await do_keyword_reactions(message=None, update_automaton=True)
-        await client.send_message(
-            message.channel,
-            'Removed keyword reaction!'
-        )
-        logger.info(
-            '%s removed keyword "%s"',
-            message.author.name,
-            name
-        )
-    except KeyError:
-        await client.send_message(
-            message.channel,
-            "That keyword doesn't exist!"
-        )
-
 async def insult(message, argstr):
     command, name = split_command(message)
     insult = get_insult()
@@ -335,45 +267,6 @@ async def insult(message, argstr):
             message.channel,
             "{}: {}".format(name, insult)
         )
-
-async def do_keyword_reactions(message=None, update_automaton=False):
-    try:
-        getattr(do_keyword_reactions, '_automaton')
-    except AttributeError:
-        update_automaton = True
-
-    if update_automaton:
-        # Make a new Aho-Corasick automaton
-        do_keyword_reactions._automaton = ahocorasick.Automaton(str)
-        # Add each keyword
-        for keyword in keywords:
-            do_keyword_reactions._automaton.add_word(keyword, keyword)
-        # Finalize the automaton for searching
-        do_keyword_reactions._automaton.make_automaton()
-
-    # In case we were called just to update the automaton
-    if message is None:
-        return
-
-    content = message.clean_content.casefold()
-    for index, keyword in do_keyword_reactions._automaton.iter(content):
-        reactions = keywords[keyword]
-        logging.debug(
-            'Got reactions [%s] for keyword "%s"',
-            ", ".join(reactions) if reactions is not None else "None",
-            keyword
-        )
-        for reaction in reactions:
-            logger.info('Reacting with "%s"', reaction)
-            try:
-                await client.add_reaction(message, reaction)
-            except discord.HTTPException as e:
-                logger.exception(
-                    'Error reacting to keyword "%s" with "%s"',
-                    keyword,
-                    reaction
-                )
-        stats['keywords seen'] += 1
 
 ### EVENT HANDLERS ###
 
@@ -454,7 +347,7 @@ async def on_message(message):
         stats['emotes seen'] += 1
 
     # Check for keywords
-    await do_keyword_reactions(message)
+    await keywords.handle_keywords(client, message)
 
 ### RUN ###
 
