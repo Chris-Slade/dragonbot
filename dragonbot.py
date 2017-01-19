@@ -15,7 +15,7 @@ from storage import Storage
 from util import split_command
 import util
 
-__version__ = '0.16.4'
+__version__ = '0.16.5'
 
 ### ARGUMENTS ###
 
@@ -257,7 +257,7 @@ async def say(client, message):
     else:
         await client.send_message(message.channel, "Couldn't find channel.")
 
-async def insult(message, argstr):
+async def insult(client, message):
     command, name = split_command(message)
     insult = get_insult()
     if insult is None:
