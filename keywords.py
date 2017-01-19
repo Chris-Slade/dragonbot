@@ -77,6 +77,7 @@ class Keywords(object):
             # If we just have a name, add it as a keyword with no reaction.
             self.keywords[argstr] = { 'reactions' : [], 'count' : 0 }
             self.update_automaton()
+            await client.send_message(message.channel, 'Keyword added!')
             self.logger.info(
                 '%s added keyword "%s"',
                 message.author.name,
