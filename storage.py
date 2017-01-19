@@ -10,6 +10,9 @@ def _normalize_key(key):
     return key.strip().casefold()
 
 class Storage(dict):
+    """A subclass of dict with additional methods for storing and
+    retrieving the mappings to and from JSON files, respectively.
+    """
 
     def __init__(self, file):
         self.file = file
