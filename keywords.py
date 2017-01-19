@@ -22,31 +22,21 @@ class Keywords(object):
         cd.register("keywords",      self.list_keywords)
         self.logger.info('Registered commands')
 
-    async def handle_keywords(
-        self,
-        client,
-        message=None,
-        update_automaton=False
-    ):
+    async def update_automaton(self)
+        # Make a new Aho-Corasick automaton
+        self.automaton = ahocorasick.Automaton(str)
+        # Add each keyword
+        for keyword in self.keywords:
+            self.automaton.add_word(keyword, keyword)
+        # Finalize the automaton for searching
+        self.automaton.make_automaton()
+        self.logger.debug('Updated automaton')
+
+    async def handle_keywords(self, client, message):
         """Processes a message, checking it for keywords and performing
         actions when they are found.
         """
-        if self.automaton is None:
-            update_automaton = True
-
-        if update_automaton:
-            # Make a new Aho-Corasick automaton
-            self.automaton = ahocorasick.Automaton(str)
-            # Add each keyword
-            for keyword in self.keywords:
-                self.automaton.add_word(keyword, keyword)
-            # Finalize the automaton for searching
-            self.automaton.make_automaton()
-            self.logger.debug('Updated automaton')
-
-        # In case we were called just to update the automaton
-        if message is None:
-            return
+        assert message is not None
 
         content = message.clean_content.casefold()
         for index, keyword in self.automaton.iter(content):
@@ -86,7 +76,7 @@ class Keywords(object):
         except:
             # If we just have a name, add it as a keyword with no reaction.
             self.keywords[argstr] = { 'reactions' : [], 'count' : 0 }
-            await self.handle_keywords(message=None, update_automaton=True)
+            await self.update_automaton()
             self.logger.info(
                 '%s added keyword "%s"',
                 message.author.name,
@@ -105,7 +95,7 @@ class Keywords(object):
         else:
             self.keywords[name] = { 'reactions' : [emote], 'count' : 0 }
         self.keywords.save()
-        await self.handle_keywords(message=None, update_automaton=True)
+        await self.update_automaton()
         await client.send_message(
             message.channel,
             'Added keyword reaction!'
@@ -122,7 +112,7 @@ class Keywords(object):
         try:
             del self.keywords[name]
             self.keywords.save()
-            await do_keyword_reactions(message=None, update_automaton=True)
+            await self.update_automaton()
             await client.send_message(
                 message.channel,
                 'Removed keyword!'
