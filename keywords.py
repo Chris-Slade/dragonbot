@@ -13,7 +13,7 @@ class Keywords(object):
         self.keywords_file = keywords_file
         self.keywords = Storage(keywords_file)
         self.logger.info('Loaded %d keywords from disk', len(self.keywords))
-        self.automaton = None
+        self.update_automaton()
 
     def register_commands(self, cd, config):
         cd.register("addkeyword",    self.add_keyword,    rw=True)
@@ -22,7 +22,7 @@ class Keywords(object):
         cd.register("keywords",      self.list_keywords)
         self.logger.info('Registered commands')
 
-    async def update_automaton(self):
+    def update_automaton(self):
         # Make a new Aho-Corasick automaton
         self.automaton = ahocorasick.Automaton(str)
         # Add each keyword
@@ -76,7 +76,7 @@ class Keywords(object):
         except:
             # If we just have a name, add it as a keyword with no reaction.
             self.keywords[argstr] = { 'reactions' : [], 'count' : 0 }
-            await self.update_automaton()
+            self.update_automaton()
             self.logger.info(
                 '%s added keyword "%s"',
                 message.author.name,
@@ -95,7 +95,7 @@ class Keywords(object):
         else:
             self.keywords[name] = { 'reactions' : [emote], 'count' : 0 }
         self.keywords.save()
-        await self.update_automaton()
+        self.update_automaton()
         await client.send_message(
             message.channel,
             'Added keyword reaction!'
@@ -112,7 +112,7 @@ class Keywords(object):
         try:
             del self.keywords[name]
             self.keywords.save()
-            await self.update_automaton()
+            self.update_automaton()
             await client.send_message(
                 message.channel,
                 'Removed keyword!'

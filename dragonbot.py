@@ -15,7 +15,7 @@ from storage import Storage
 from util import split_command
 import util
 
-__version__ = '0.16.2'
+__version__ = '0.16.3'
 
 ### ARGUMENTS ###
 
