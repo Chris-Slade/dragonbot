@@ -10,7 +10,7 @@ class Emotes(object):
     """Emotes module for DragonBot."""
 
     def __init__(self, emotes_file):
-        self.logger = logging.getLogger('DragonBot')
+        self.logger = logging.getLogger('dragonbot.' + __name__)
         self.emotes_file = emotes_file
         self.emotes = Storage(emotes_file)
         self.logger.info('Loaded %d emotes from disk', len(self.emotes))
