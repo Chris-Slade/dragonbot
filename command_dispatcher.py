@@ -109,3 +109,6 @@ class CommandDispatcher(object):
             )
         # Call the command
         return await command.func(client, message)
+
+    def known_command_names(self):
+        return self.commands.keys()

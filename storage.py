@@ -1,7 +1,9 @@
+import atexit
 import json
 import logging
-import atexit
 import os
+
+import util
 
 class KeyExistsError(Exception):
     pass
@@ -16,7 +18,7 @@ class Storage(dict):
 
     def __init__(self, file):
         self.file = file
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger('dragonbot.' + __name__)
         self.load(file)
         atexit.register(self.save)
         super().__init__()
@@ -69,3 +71,6 @@ class Storage(dict):
         key = _normalize_key(key)
         self.logger.info('Deleted "%s"', key)
         return super().__delitem__(key)
+
+    def as_text_list(self):
+        return ", ".join(sorted(self))

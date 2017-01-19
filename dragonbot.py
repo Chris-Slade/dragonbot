@@ -13,11 +13,13 @@ import sys
 import time
 
 from command_dispatcher import CommandDispatcher
-from insult import random_insult, get_insult
-from storage import Storage, KeyExistsError
+from emotes import Emotes
+from insult import get_insult
+from storage import Storage
+from util import split_command
 import util
 
-__version__ = '0.13.2'
+__version__ = '0.14.0'
 
 ### ARGUMENTS ###
 
@@ -122,7 +124,7 @@ def init():
         ]),
         datefmt='%Y-%m-%d %H:%M:%S'
     )
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger('dragonbot')
     logger.setLevel(opts.log)
     logger.info(
         'Set logging level to %s, global level to %s',
@@ -139,13 +141,12 @@ def init():
     with open(opts.config, 'r', encoding='utf-8') as fh:
         config = json.load(fh)
 
-    # Initialize emotes
+    # Initialize emote module
     # XXX This should be changed so the different sources of the emotes file
     # location have a clearly defined precedence over one another.
     if 'emotes_file' not in config:
         config['emotes_file'] = opts.emotes
-    emotes = Storage(config['emotes_file'])
-    logger.info('Loaded %d emotes from disk', len(emotes))
+    emotes = Emotes(config['emotes_file'])
 
     # Initialize keywords
     if 'keywords_file' not in config:
@@ -154,25 +155,22 @@ def init():
     logger.info('Loaded %d keywords from disk', len(keywords))
 
     # Set up command dispatcher
-
     owner_only = { config['owner_id'] } # For registering commands as owner-only
     cd = CommandDispatcher(read_only=opts.read_only)
-    cd.register("addemote", add_emote, rw=True)
     cd.register("addkeyword", add_keyword, rw=True)
-    cd.register("deleteemote", remove_emote, rw=True)
     cd.register("deletekeyword", remove_keyword, rw=True)
-    cd.register("emotes", list_emotes)
     cd.register("help", show_help)
     cd.register("insult", insult)
     cd.register("keywords", list_keywords)
-    cd.register("refreshemotes", refresh_emotes, may_use=owner_only)
-    cd.register("removeemote", remove_emote, rw=True)
     cd.register("removekeyword", remove_keyword, rw=True)
     cd.register("say", say, may_use=owner_only)
     cd.register("stats", show_stats)
     cd.register("test", test, may_use=owner_only, rw=True)
     cd.register("truth", truth)
+    emotes.register_commands(cd, config)
     command_dispatcher = cd # Make global
+
+    logger.debug(", ".join(cd.known_command_names()))
 
     stats = collections.defaultdict(int)
 
@@ -188,121 +186,22 @@ def main():
         logging.error("Exception reached main()")
         sys.exit(1)
 
-### BOT-RELATED UTILITY FUNCTIONS ###
-
 def version():
     return 'DragonBot v{} (discord.py v{})'.format(
         __version__,
         discord.__version__
     )
 
-def split_command(message):
-    """Split a command message.
-
-    E.g., split_command("!test foo bar") will return ("!test", "foo bar").
-    """
-    split = message.content[1:].split(maxsplit=1)
-    command = split[0] if len(split) >= 1 else None
-    argstr  = split[1] if len(split) >= 2 else None
-    return command, argstr
-
 ### COMMANDS ###
 
-async def list_stored_items(message, storage, items='items'):
-    if len(storage) == 0:
-        await client.send_message(
-            message.channel,
-            "I don't have any {} yet!".format(items)
-        )
-    item_list = ", ".join(sorted(storage))
-    for chunk in util.chunker(item_list, 2000):
-        await client.send_message(message.channel, chunk)
-
-async def list_emotes(client, message):
-    await list_stored_items(message, emotes, 'emotes')
-
 async def list_keywords(client, message):
-    await list_stored_items(message, keywords, 'keywords')
-
-async def add_emote(client, message):
-    command, argstr = split_command(message)
-    try:
-        if argstr is None:
-            raise ValueError('No arguments')
-        pattern = re.compile(
-            r'^ \s* \{ \s* ([^{}]+) \s* \} \s* \{ \s* ([^{}]+) \s* \}',
-            re.X
-        )
-        match = pattern.search(argstr)
-        if match:
-            emote, body = match.group(1, 2)
-            emote = emote.strip()
-            body = body.strip()
-        else:
-            raise ValueError('Malformed parameters to !addemote')
-    except Exception as e:
-        logger.info('Failed to parse !addcommand', exc_info=e)
+    if len(keywords) == 0:
         await client.send_message(
             message.channel,
-            'Give me a name and a URL, {}.'.format(random_insult())
+            "I don't have any keywords yet!"
         )
-        return
-
-    try:
-        emotes[emote] = body
-        emotes.save()
-        logger.info(
-            'Emote "%s" added by "%s"',
-            emote,
-            message.author.name
-        )
-        stats['emotes added'] += 1
-        await client.send_message(
-            message.channel,
-            'Added emote! ' + str(server_emoji['pride'])
-                if 'pride' in server_emoji else 'Added emote!'
-        )
-    except KeyExistsError:
-        await client.send_message(
-            message.channel,
-            'That emote already exists, {}.'.format(random_insult())
-        )
-
-async def remove_emote(client, message):
-    command, argstr = split_command(message)
-    if argstr is None:
-        await client.send_message(
-            message.channel,
-            "I can't delete nothing, {}. {}".format(
-                random_insult(),
-                str(server_emoji['tsun']) if 'tsun' in server_emoji else ''
-            )
-        )
-        return
-
-    emote = argstr
-    try:
-        del emotes[emote]
-        emotes.save()
-        logger.info(
-            'Emote "%s" deleted by "%s"',
-            emote,
-            message.author.name
-        )
-        stats['emotes deleted'] += 1
-        await client.send_message(
-            message.channel,
-            'Deleted emote! ' + str(server_emoji['pride'])
-                if 'pride' in server_emoji else 'Deleted emote!'
-        )
-    except KeyError:
-        await client.send_message(
-            message.channel,
-            "That emote isn't stored, {}. {}".format(
-                random_insult(),
-                str(server_emoji['tsun']) if 'tsun' in server_emoji else ''
-            )
-        )
+    for chunk in util.chunker(keywords.as_text_list(), 2000):
+        await client.send_message(message.channel, chunk)
 
 async def truth(client, message):
     await client.send_message(message.channel, 'slushrfggts')
@@ -333,12 +232,12 @@ Commands:
   test          : For testing and debugging. For the bot owner's use only.
   truth         : Tell the truth.
 ```'''.format(version())
+# TODO: Let modules provide help messages for their own commands
     )
 
 async def test(client, message):
-    logger.info(message.content)
-    logger.info(message.clean_content)
-    await client.add_reaction(message, 'pride:266322418887294976')
+    test_message = 'a' * 2500
+    await client.send_message(message.channel, test_message)
 
 async def show_stats(client, message):
     stats['uptime']         = time.time() - stats['start time']
@@ -371,10 +270,6 @@ async def say(client, message):
         await client.send_message(channel, user_message)
     else:
         await client.send_message(message.channel, "Couldn't find channel.")
-
-async def refresh_emotes(client, message):
-    emotes.load(config['emotes_file'])
-    await client.send_message(message.channel, 'Emotes refreshed!')
 
 async def add_keyword(client, message):
     command, argstr = split_command(message)
@@ -555,12 +450,8 @@ async def on_message(message):
             )
     elif message.clean_content.startswith('@'):
         logger.info('Handling emote message "%s"', message.clean_content)
-        emote = message.clean_content[1:]
-        try:
-            await client.send_message(message.channel, emotes[emote])
-            stats['emotes seen'] += 1
-        except KeyError:
-            await client.add_reaction(message, '❔')
+        await emotes.display_emote(client, message)
+        stats['emotes seen'] += 1
 
     # Check for keywords
     await do_keyword_reactions(message)

@@ -24,3 +24,13 @@ def remove_punctuation(text):
                 if unicodedata.category(chr(i)).startswith('P')
         )
     return text.translate(remove_punctuation._tbl)
+
+def split_command(message):
+    """Split a command message.
+
+    E.g., split_command("!test foo bar") will return ("!test", "foo bar").
+    """
+    split = message.content[1:].split(maxsplit=1)
+    command = split[0] if len(split) >= 1 else None
+    argstr  = split[1] if len(split) >= 2 else None
+    return command, argstr
