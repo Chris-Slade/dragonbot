@@ -63,6 +63,9 @@ class Keywords(object):
                 self.logger.info('Reacting with "%s"', reaction)
                 try:
                     await client.add_reaction(message, reaction)
+                except discord.errors.Forbidden:
+                    self.logger.info('Reached max number of reactions')
+                    return
                 except discord.HTTPException as e:
                     self.logger.exception(
                         'Error reacting to keyword "%s" with "%s"',
