@@ -325,8 +325,8 @@ async def on_ready():
 @client.event
 async def on_message(message):
     stats['messages seen'] += 1
-    if message.content.startswith('!'):
-        if message.content == '!':
+    if message.content.startswith(constants.COMMAND_PREFIX):
+        if message.content == constants.COMMAND_PREFIX:
             logger.info('Ignoring null command')
             return
         logger.info('Handling command message "%s"', message.content)
@@ -354,7 +354,7 @@ async def on_message(message):
                 command,
                 str(e)
             )
-    elif message.clean_content.startswith('@'):
+    elif message.clean_content.startswith(constants.EMOTE_PREFIX):
         logger.info('Handling emote message "%s"', message.clean_content)
         await emotes.display_emote(client, message)
         stats['emotes seen'] += 1
