@@ -72,5 +72,9 @@ class Storage(dict):
         self.logger.info('Deleted "%s"', key)
         return super().__delitem__(key)
 
+    def __contains__(self, key):
+        key = _normalize_key(key)
+        return super().__contains__(key)
+
     def as_text_list(self):
         return ", ".join(sorted(self))
