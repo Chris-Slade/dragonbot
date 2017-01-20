@@ -4,6 +4,7 @@ import re
 
 from insult import random_insult
 from storage import Storage, KeyExistsError
+import constants
 import util
 
 class Emotes(object):
@@ -107,7 +108,10 @@ class Emotes(object):
                 message.channel,
                 "I don't have any emotes yet!"
             )
-        for chunk in util.chunker(self.emotes.as_text_list(), 2000):
+        for chunk in util.chunker(
+            self.emotes.as_text_list(),
+            constants.MAX_CHARACTERS
+        ):
             await client.send_message(message.channel, chunk)
 
     async def display_emote(self, client, message):
@@ -117,6 +121,6 @@ class Emotes(object):
             await client.send_message(message.channel, self.emotes[emote])
         else:
             self.logger.debug('Unknown emote')
-            await client.add_reaction(message, '❔')
+            await client.add_reaction(message, constants.IDK_REACTION)
 
 # End of Emotes

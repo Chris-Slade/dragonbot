@@ -13,6 +13,7 @@ from insult import get_insult
 from keywords import Keywords
 from storage import Storage
 from util import split_command
+import constants
 import util
 
 __version__ = '0.16.7'
@@ -21,12 +22,12 @@ __version__ = '0.16.7'
 
 def getopts():
     defaults = {
-        'config'     : 'config.json',
-        'emotes'     : 'emotes.json',
-        'global-log' : 'WARNING',
+        'config'     : constants.DEFAULT_CONFIG,
+        'emotes'     : constants.DEFAULT_EMOTES,
+        'global-log' : constants.DEFAULT_LOG_LEVEL,
         'greet'      : True,
-        'keywords'   : 'keywords.json',
-        'log'        : 'INFO',
+        'keywords'   : constants.DEFAULT_KEYWORDS,
+        'log'        : constants.DEFAULT_BOT_LOG_LEVEL,
         'read-only'  : False,
     }
     parser = argparse.ArgumentParser(description='Discord chat bot')
@@ -112,13 +113,8 @@ def init():
     # Initialize logger
     logging.basicConfig(
         level=opts.global_log,
-        format=' | '.join([
-            '%(asctime)s',
-            '%(levelname)s',
-            '%(module)s:%(funcName)s:%(lineno)d',
-            '%(message)s'
-        ]),
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format=constants.LOG_FORMAT,
+        datefmt=constants.DATE_FORMAT
     )
     logger = logging.getLogger('dragonbot')
     logger.setLevel(opts.log)

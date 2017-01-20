@@ -4,6 +4,7 @@ import logging
 import re
 
 from storage import Storage
+import constants
 import util
 
 class Keywords(object):
