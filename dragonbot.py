@@ -16,7 +16,7 @@ from util import split_command
 import constants
 import util
 
-__version__ = '0.18.0'
+__version__ = '0.18.1'
 
 ### ARGUMENTS ###
 

@@ -21,7 +21,8 @@ class Keywords(object):
     def help():
         return """```
 Keywords:
-  The bot counts keywords and sends messages when "gets" occur. The bot
+  The bot counts keywords and sends messages when "gets" occur.
+  (Technically, it counts messages in which a keyword occurs.) The bot
   can also post reactions to keywords.
 
   {prefix}addkeyword <keyword> <optional reaction>
@@ -69,8 +70,12 @@ Keywords:
         assert message is not None
 
         content = message.clean_content.casefold()
+        seen = set()
         for index, keyword in self.automaton.iter(content):
             # Count keyword
+            if keyword in seen:
+                continue
+            seen.add(keyword)
             self.keywords[keyword]['count'] += 1
             count = self.keywords[keyword]['count']
             self.logger.info('Incremented count of "%s" to %d', keyword, count)
