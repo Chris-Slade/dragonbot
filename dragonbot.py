@@ -35,19 +35,22 @@ def getopts():
     parser.add_argument(
         '-c', '--config',
         type=str,
-        help='Specify the configuration file to use.'
+        help='Specify the configuration file to use. Defaults to '
+            + defaults['config'] + '.'
     )
     parser.add_argument(
         '-e', '--emotes',
         type=str,
-        help='Specify the emotes file to use.'
+        help='Specify the emotes file to use. Defaults to '
+            + defaults['emotes'] + '.'
     )
     parser.add_argument(
         '--global-log',
         type=str,
         help='Set the logging level for all modules to the given level. Can be'
             ' one of (from least to most verbose):'
-            ' DEBUG, INFO, WARNING, ERROR, CRITICAL'
+            ' DEBUG, INFO, WARNING, ERROR, CRITICAL.'
+            ' Defaults to ' + defaults['global-log'] + '.'
     )
     parser.add_argument(
         '--greet',
@@ -65,13 +68,14 @@ def getopts():
     parser.add_argument(
         '-k', '--keywords',
         type=str,
-        help='Specify the keywords file to use.'
+        help='Specify the keywords file to use. Defaults to '
+            + defaults['keywords'] + '.'
     )
     parser.add_argument(
         '-l', '--log',
         type=str,
         help='Set the logging level for only the main module. Takes the same'
-            ' values as `--global-log`.'
+            ' values as `--global-log`. Defaults to ' + defaults['log'] + '.'
     )
     parser.add_argument(
         '--read-only',
