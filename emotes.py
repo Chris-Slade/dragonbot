@@ -16,6 +16,31 @@ class Emotes(object):
         self.emotes = Storage(emotes_file)
         self.logger.info('Loaded %d emotes from disk', len(self.emotes))
 
+    @staticmethod
+    def help():
+        return """```
+Emotes:
+  Emotes are activated by sending a message beginning with the prefix
+  "{eprefix}" followed by the name of the emote.
+
+  {prefix}addemote {{<emote name>}}{{<emote payload>}}
+    Adds an emote. For example, `!addemote
+    {{example}}{{http://example.com/emote.png}}` will allow you to
+    use `@example` to have the corresponding URL posted by the bot.
+    Because both emote names and the corresponding strings may contain
+    whitespace, both must be surrounded by curly braces, as in the
+    example.
+
+  {prefix}deleteemote <emote name>
+    Alias for `{prefix}removeemote`.
+
+  {prefix}emotes
+    Show a list of known emotes.
+
+  {prefix}removeemote <emote name>
+    Remove an emote.
+```""".format(eprefix=constants.EMOTE_PREFIX, prefix=constants.COMMAND_PREFIX)
+
     def register_commands(self, cd, config=None):
         """Register this module's commands with a CommandDispatcher.
 

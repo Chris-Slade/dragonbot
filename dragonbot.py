@@ -16,7 +16,7 @@ from util import split_command
 import constants
 import util
 
-__version__ = '0.17.0'
+__version__ = '0.18.0'
 
 ### ARGUMENTS ###
 
@@ -184,60 +184,52 @@ def version():
         discord.__version__
     )
 
+def help():
+    return """```
+{version}
+Commands:
+  Commands are activated by sending a message beginning with the prefix
+
+  "{prefix}" followed by the name of the command and zero or more
+  arguments.
+
+  {prefix}help
+    Show this help message.
+
+  {prefix}help <section>
+    Show the help section for a submodule. Options are `emotes` and `keywords`.
+
+  {prefix}insult <someone's name>
+    Insult someone with a random insult.
+
+  {prefix}say <channel ID> <message>
+    Have the bot post a message in a given channel. Owner only.
+
+  {prefix}stats
+    Show bot statistics.
+
+  {prefix}test
+    For testing and debugging. For the bot owner's use only.
+
+  {prefix}truth
+    Tell the truth.
+```""".format(version=version(), prefix=constants.COMMAND_PREFIX)
+
 ### COMMANDS ###
 
 async def truth(client, message):
     await client.send_message(message.channel, 'slushrfggts')
 
 async def show_help(client, message):
-    # TODO: Let modules provide help messages for their own commands
-    await client.send_message(
-        message.channel,
-'''```
-{}
-Commands:
-  {prefix}addemote {{<emote name>}}{{<emote payload>}}
-    Adds an emote. For example, `!addemote
-    {{example}}{{http://example.com/emote.png}}` will allow you to
-    use `@example` to have the corresponding URL posted by the bot.
-    Because both emote names and the corresponding strings may contain
-    whitespace, both must be surrounded by curly braces, as in the
-    example.
-  {prefix}addkeyword <keyword> <optional reaction>
-    Add a keyword. The bot will count these keywords and send a message
-    when a "get" occurs. In addition, reactions may be given, which
-    are automatically added to messages containing keywords. A given
-    keyword may have zero or more reactions, but they have to be added
-    one at a time. The syntax of this command might change to allow for
-    keyphrases in addition to just words.
-  {prefix}count <keyword>
-    Show the current count of a given keyword.
-  {prefix}deleteemote <emote name>
-    Alias for `{prefix}removeemote`.
-  {prefix}deletekeyword
-    Alias for `removekeyword`.
-  {prefix}emotes
-    Show a list of known emotes.
-  {prefix}help
-    Show this help message.
-  {prefix}insult <someone's name>
-    Insult someone with a random insult.
-  {prefix}removeemote <emote name>
-    Remove an emote.
-  {prefix}removekeyword <keyword>
-    Remove a keyword. WARNING: This removes a keyword with its count and
-    all associated reactions. There is currently not a way to remove
-    just a reaction to reset the counter in isolation.
-  {prefix}say <channel ID> <message>
-    Have the bot post a message in a given channel. Owner only.
-  {prefix}stats
-    Show bot statistics.
-  {prefix}test
-    For testing and debugging. For the bot owner's use only.
-  {prefix}truth
-    Tell the truth.
-```'''.format(version(), prefix=constants.COMMAND_PREFIX)
-    )
+    command, argstr = util.split_command(message)
+    if argstr is None:
+        await client.send_message(message.channel, help())
+    elif argstr.casefold() == 'emotes':
+        await client.send_message(message.channel, Emotes.help())
+    elif argstr.casefold() == 'keywords':
+        await client.send_message(message.channel, Keywords.help())
+    else:
+        await client.send_message(message.channel, "I don't have help for that.")
 
 async def test(client, message):
     test_message = 'a' * 2500

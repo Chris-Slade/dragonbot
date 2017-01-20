@@ -17,6 +17,33 @@ class Keywords(object):
         self.logger.info('Loaded %d keywords from disk', len(self.keywords))
         self.update_automaton()
 
+    @staticmethod
+    def help():
+        return """```
+Keywords:
+  The bot counts keywords and sends messages when "gets" occur. The bot
+  can also post reactions to keywords.
+
+  {prefix}addkeyword <keyword> <optional reaction>
+    Add a keyword. The bot will count these keywords and send a message
+    when a "get" occurs. In addition, reactions may be given, which
+    are automatically added to messages containing keywords. A given
+    keyword may have zero or more reactions, but they have to be added
+    one at a time. The syntax of this command might change to allow for
+    keyphrases in addition to just words.
+
+  {prefix}count <keyword>
+    Show the current count of a given keyword.
+
+  {prefix}deletekeyword
+    Alias for `removekeyword`.
+
+  {prefix}removekeyword <keyword>
+    Remove a keyword. WARNING: This removes a keyword with its count and
+    all associated reactions. There is currently not a way to remove
+    just a reaction to reset the counter in isolation.
+```""".format(prefix=constants.COMMAND_PREFIX)
+
     def register_commands(self, cd, config):
         cd.register("addkeyword",    self.add_keyword,    rw=True)
         cd.register("deletekeyword", self.remove_keyword, rw=True)
