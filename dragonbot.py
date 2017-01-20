@@ -16,7 +16,7 @@ from util import split_command
 import constants
 import util
 
-__version__ = '0.16.8'
+__version__ = '0.17.0'
 
 ### ARGUMENTS ###
 
@@ -210,6 +210,8 @@ Commands:
     keyword may have zero or more reactions, but they have to be added
     one at a time. The syntax of this command might change to allow for
     keyphrases in addition to just words.
+  {prefix}count <keyword>
+    Show the current count of a given keyword.
   {prefix}deleteemote <emote name>
     Alias for `{prefix}removeemote`.
   {prefix}deletekeyword

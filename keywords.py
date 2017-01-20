@@ -22,6 +22,7 @@ class Keywords(object):
         cd.register("deletekeyword", self.remove_keyword, rw=True)
         cd.register("removekeyword", self.remove_keyword, rw=True)
         cd.register("keywords",      self.list_keywords)
+        cd.register("count",         self.show_count)
         self.logger.info('Registered commands')
 
     def update_automaton(self):
@@ -142,3 +143,13 @@ class Keywords(object):
             )
         for chunk in util.chunker(self.keywords.as_text_list(), 2000):
             await client.send_message(message.channel, chunk)
+
+    async def show_count(self, client, message):
+        command, keyword = util.split_command(message)
+        if keyword in self.keywords:
+            await client.send_message(
+                message.channel,
+                self.keywords[keyword]['count']
+            )
+        else:
+            await client.send_message(message.channel, constants.IDK_REACTION)
