@@ -16,7 +16,7 @@ from util import split_command
 import constants
 import util
 
-__version__ = '0.16.7'
+__version__ = '0.16.8'
 
 ### ARGUMENTS ###
 
@@ -190,35 +190,51 @@ async def truth(client, message):
     await client.send_message(message.channel, 'slushrfggts')
 
 async def show_help(client, message):
+    # TODO: Let modules provide help messages for their own commands
     await client.send_message(
         message.channel,
 '''```
 {}
 Commands:
-  addemote      : Adds an emote. For example,
-      `!addemote {{example}}{{http://example.com/emote.png}}` will allow
-      you to use `@example` to have the corresponding URL posted by the
-      bot. Because both emote names and the corresponding strings may
-      contain whitespace, both must be surrounded by curly braces, as in
-      the example.
-  addkeyword    : Add a keyword. The bot will count these keywords. In
-    addition, reactions may be given, which are automatically added to messages
-    containing keywords.
-  deleteemote   : Alias for `removeemote`.
-  deletekeyword : Alias for `removekeyword`.
-  emotes        : Show a list of known emotes.
-  help          : Show this help message.
-  insult        : Insult someone.
-  removeemote   : Remove an emote.
-  removekeyword : Remove a keyword. WARNING: This removes a keyword with its
-      count and all associated reactions. There is currently not a way to
-      remove just a reaction to reset the counter in isolation.
-  say           : Post a message in a given channel. Owner only.
-  stats         : Show bot statistics.
-  test          : For testing and debugging. For the bot owner's use only.
-  truth         : Tell the truth.
-```'''.format(version())
-# TODO: Let modules provide help messages for their own commands
+  {prefix}addemote {{<emote name>}}{{<emote payload>}}
+    Adds an emote. For example, `!addemote
+    {{example}}{{http://example.com/emote.png}}` will allow you to
+    use `@example` to have the corresponding URL posted by the bot.
+    Because both emote names and the corresponding strings may contain
+    whitespace, both must be surrounded by curly braces, as in the
+    example.
+  {prefix}addkeyword <keyword> <optional reaction>
+    Add a keyword. The bot will count these keywords and send a message
+    when a "get" occurs. In addition, reactions may be given, which
+    are automatically added to messages containing keywords. A given
+    keyword may have zero or more reactions, but they have to be added
+    one at a time. The syntax of this command might change to allow for
+    keyphrases in addition to just words.
+  {prefix}deleteemote <emote name>
+    Alias for `{prefix}removeemote`.
+  {prefix}deletekeyword
+    Alias for `removekeyword`.
+  {prefix}emotes
+    Show a list of known emotes.
+  {prefix}help
+    Show this help message.
+  {prefix}insult <someone's name>
+    Insult someone with a random insult.
+  {prefix}removeemote <emote name>
+    Remove an emote.
+  {prefix}removekeyword <keyword>
+    Remove a keyword. WARNING: This removes a keyword with its count and
+    all associated reactions. There is currently not a way to remove
+    just a reaction to reset the counter in isolation.
+  {prefix}say <channel ID> <message>
+    Have the bot post a message in a given channel. Owner only.
+  {prefix}stats
+    Show bot statistics.
+  {prefix}test
+    For testing and debugging. For the bot owner's use only.
+  {prefix}truth
+    Tell the truth.
+```'''.format(version(), prefix=constants.COMMAND_PREFIX)
     )
 
 async def test(client, message):
