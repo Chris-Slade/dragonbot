@@ -16,7 +16,7 @@ from util import split_command
 import constants
 import util
 
-__version__ = '0.18.2'
+__version__ = '0.18.3'
 
 ### ARGUMENTS ###
 
@@ -276,9 +276,11 @@ async def insult(client, message):
             "Error retrieving insult."
         )
     else:
+        if not (insult.startswith("I ") or insult.startswith("I'm ")):
+            insult = insult[0].lower() + insult[1:]
         await client.send_message(
             message.channel,
-            "{}: {}".format(name, insult)
+            "{}, {}".format(name, insult)
         )
 
 ### EVENT HANDLERS ###
