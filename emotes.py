@@ -4,6 +4,7 @@ import re
 
 from insult import random_insult
 from storage import Storage, KeyExistsError
+from util import command_method
 import constants
 import util
 
@@ -54,6 +55,7 @@ Emotes:
         cd.register("refreshemotes", self.refresh_emotes, may_use={config['owner_id']})
         self.logger.info('Registered commands')
 
+    @command_method
     async def add_emote(self, client, message):
         command, argstr = util.split_command(message)
         try:
@@ -97,6 +99,7 @@ Emotes:
             )
     # End of add_emote
 
+    @command_method
     async def remove_emote(self, client, message):
         command, argstr = util.split_command(message)
         if argstr is None:
@@ -123,10 +126,12 @@ Emotes:
             )
     # End of remove_emote
 
+    @command_method
     async def refresh_emotes(self, client, message):
         self.emotes.load(self.emotes_file)
         await client.send_message(message.channel, 'Emotes refreshed!')
 
+    @command_method
     async def list_emotes(self, client, message):
         if len(self.emotes) == 0:
             await client.send_message(
@@ -139,6 +144,7 @@ Emotes:
         ):
             await client.send_message(message.channel, chunk)
 
+    @command_method
     async def display_emote(self, client, message):
         emote = message.clean_content[1:]
         if emote in self.emotes:

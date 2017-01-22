@@ -12,7 +12,7 @@ from emotes import Emotes
 from insult import get_insult
 from keywords import Keywords
 from storage import Storage
-from util import split_command
+from util import split_command, command
 import constants
 import util
 
@@ -166,11 +166,26 @@ def init():
 
     stats = collections.defaultdict(int)
 
+    server_emoji = {}
+
+    assert None not in (
+        client,
+        command_dispatcher,
+        config,
+        emotes,
+        keywords,
+        logger,
+        opts,
+        server_emoji,
+        stats
+    ), 'Variable was not initialized'
+
     logger.info('Finished initializing')
 
 def main():
     init()
     logger.info(version())
+    assert version(), "version() should return a non-empty string, but didn't"
     stats['start time'] = time.time()
     try:
         client.run(config['credentials']['token'])
@@ -179,9 +194,13 @@ def main():
         return
 
 def version():
-    return 'DragonBot v{} (discord.py v{})'.format(
+    assert '__version__' in globals(), 'No global __version__ variable'
+    return 'DragonBot v{} (discord.py v{}){}{}'.format(
         __version__,
-        discord.__version__
+        discord.__version__,
+        ' [DEBUG MODE]' if __debug__ else '',
+        ' [READ ONLY]' if hasattr(opts, 'read_only')
+            and getattr(opts, 'read_only') else '',
     )
 
 def help():
@@ -217,9 +236,12 @@ Commands:
 
 ### COMMANDS ###
 
+@command
 async def truth(client, message):
+    assert None not in (client, message), 'Got None, expected value'
     await client.send_message(message.channel, 'slushrfggts')
 
+@command
 async def show_help(client, message):
     command, argstr = util.split_command(message)
     if argstr is None:
@@ -231,10 +253,12 @@ async def show_help(client, message):
     else:
         await client.send_message(message.channel, "I don't have help for that.")
 
+@command
 async def test(client, message):
     test_message = 'a' * 2500
     await client.send_message(message.channel, test_message)
 
+@command
 async def show_stats(client, message):
     stats['uptime']         = time.time() - stats['start time']
     stats['emotes known']   = len(emotes)
@@ -251,6 +275,7 @@ async def show_stats(client, message):
     stat_message = "\n".join(sb)
     await client.send_message(message.channel, stat_message)
 
+@command
 async def say(client, message):
     command, argstr = split_command(message)
     try:
@@ -267,6 +292,7 @@ async def say(client, message):
     else:
         await client.send_message(message.channel, "Couldn't find channel.")
 
+@command
 async def insult(client, message):
     command, name = split_command(message)
     insult = get_insult()
@@ -288,22 +314,25 @@ async def insult(client, message):
 @client.event
 async def on_ready():
     global server_emoji
+    assert client is not None, 'client is None in on_ready()'
     logger.info('Bot is ready')
     stats['connect time'] = time.time() - stats['start time']
-    server = client.get_server(config['greetings_server'])
 
-    if server is not None:
+    if 'greetings_server' in config:
+        server = client.get_server(config['greetings_server'])
         # Log server and default channel
         logger.info("Logged into server %s", server)
         if server.default_channel is not None:
             logger.info("Default channel is %s", server.default_channel)
 
         # Collect server emoji
-        server_emoji = {}
+        if server_emoji is None:
+            server_emoji = {}
         for emoji in client.get_all_emojis():
             server_emoji[emoji.name] = emoji
         logger.info('Got %d emoji in this server', len(server_emoji))
         logger.debug(', '.join(server_emoji.keys()))
+
         # Post a greeting
         if opts.greet:
             await client.send_message(

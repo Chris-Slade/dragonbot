@@ -1,3 +1,4 @@
+import functools
 import logging
 import sys
 import unicodedata
@@ -41,3 +42,21 @@ def is_get(number):
     count = str(number)
     if len(count) >= 2 and count[-1] == count[-2]:
         return True
+
+def command(command):
+    """Perform actions that should be done every time a command is invoked."""
+    @functools.wraps(command)
+    async def wrapper(client, message):
+        assert client is not None, 'Got None for client'
+        assert message is not None, 'Got None for message'
+        await command(client, message)
+    return wrapper
+
+def command_method(command):
+    """Perform actions that should be done every time a command is invoked."""
+    @functools.wraps(command)
+    async def wrapper(self, client, message):
+        assert client is not None, 'Got None for client'
+        assert message is not None, 'Got None for message'
+        await command(self, client, message)
+    return wrapper

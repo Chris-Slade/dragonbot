@@ -4,6 +4,7 @@ import logging
 import re
 
 from storage import Storage
+from util import command_method
 import constants
 import util
 
@@ -63,6 +64,7 @@ Keywords:
         self.automaton.make_automaton()
         self.logger.debug('Updated automaton')
 
+    @command_method
     async def handle_keywords(self, client, message):
         """Processes a message, checking it for keywords and performing
         actions when they are found.
@@ -107,6 +109,7 @@ Keywords:
                         reaction
                     )
 
+    @command_method
     async def add_keyword(self, client, message):
         command, argstr = util.split_command(message)
         try:
@@ -146,6 +149,7 @@ Keywords:
             emote
         )
 
+    @command_method
     async def remove_keyword(self, client, message):
         command, name = util.split_command(message)
         try:
@@ -167,6 +171,7 @@ Keywords:
                 "That keyword doesn't exist!"
             )
 
+    @command_method
     async def list_keywords(self, client, message):
         if len(self.keywords) == 0:
             await client.send_message(
@@ -176,6 +181,7 @@ Keywords:
         for chunk in util.chunker(self.keywords.as_text_list(), 2000):
             await client.send_message(message.channel, chunk)
 
+    @command_method
     async def show_count(self, client, message):
         command, keyword = util.split_command(message)
         if keyword in self.keywords:
