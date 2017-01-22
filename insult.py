@@ -5,9 +5,13 @@ various ways.
 import codecs
 import json
 import random
+import time
 import urllib
 import urllib.request
 from html.parser import HTMLParser
+
+class RateLimited(Exception):
+    pass
 
 class GetInsult(HTMLParser):
     def __init__(self):
@@ -40,10 +44,24 @@ class GetInsult(HTMLParser):
         else:
             return None
 
-def get_insult():
+def get_insult(rate_limit=None):
+    assert rate_limit is None or isinstance(rate_limit, int)
+    if rate_limit is not None:
+        if not hasattr(get_insult, '_last_called'):
+            get_insult._last_called = time.time()
+        else:
+            cur_time = time.time()
+            if cur_time - get_insult._last_called < rate_limit:
+                raise RateLimited('You are being rate limited')
+            else:
+                get_insult._last_called = cur_time
     parser = GetInsult()
     content = get_content('http://insultgenerator.org')
-    return parser.get_insult(content)
+    insult = parser.get_insult(content)
+    assert insult is not None, \
+        'Got None insult. get_insult() should either' \
+        ' return something or raise an exception.'
+    return insult
 
 def get_content(url):
     return str(urllib.request.urlopen(url).read(), encoding='utf-8')
@@ -77,4 +95,3 @@ def random_insult(insults_file='insults.json'):
             ]
         random_insult._cache = insults
     return random.choice(random_insult._cache)
-

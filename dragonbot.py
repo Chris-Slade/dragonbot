@@ -14,9 +14,10 @@ from keywords import Keywords
 from storage import Storage
 from util import split_command, command
 import constants
+import insult as insult_module
 import util
 
-__version__ = '0.18.3'
+__version__ = '0.18.4'
 
 ### ARGUMENTS ###
 
@@ -295,19 +296,25 @@ async def say(client, message):
 @command
 async def insult(client, message):
     command, name = split_command(message)
-    insult = get_insult()
-    if insult is None:
-        await client.send_message(
-            message.channel,
-            "Error retrieving insult."
-        )
-    else:
+    try:
+        insult = get_insult(rate_limit=1.5)
         if not (insult.startswith("I ") or insult.startswith("I'm ")):
             insult = insult[0].lower() + insult[1:]
         await client.send_message(
             message.channel,
             "{}, {}".format(name, insult)
         )
+    except insult_module.RateLimited:
+        await client.send_message(
+            message.channel,
+            'Requests are being sent too quickly.'
+        )
+    except URLError as e:
+        await client.send_message(
+            message.channel,
+            'Error retrieving insult from server.'
+        )
+        logger.warning('Error retrieving insult from server: %s', str(e))
 
 ### EVENT HANDLERS ###
 
