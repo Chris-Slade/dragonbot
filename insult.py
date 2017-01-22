@@ -45,7 +45,6 @@ class GetInsult(HTMLParser):
             return None
 
 def get_insult(rate_limit=None):
-    assert rate_limit is None or isinstance(rate_limit, int)
     if rate_limit is not None:
         if not hasattr(get_insult, '_last_called'):
             get_insult._last_called = time.time()

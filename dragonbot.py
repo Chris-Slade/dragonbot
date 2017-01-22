@@ -7,6 +7,8 @@ import json
 import logging
 import time
 
+from urllib.error import URLError
+
 from command_dispatcher import CommandDispatcher
 from emotes import Emotes
 from insult import get_insult
@@ -17,7 +19,7 @@ import constants
 import insult as insult_module
 import util
 
-__version__ = '0.18.4'
+__version__ = '0.18.5'
 
 ### ARGUMENTS ###
 
