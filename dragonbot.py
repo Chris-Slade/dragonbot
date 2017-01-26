@@ -24,6 +24,7 @@ __version__ = '0.19.0'
 ### ARGUMENTS ###
 
 def getopts():
+    """Handle bot arguments."""
     defaults = {
         'config'     : constants.DEFAULT_CONFIG,
         'emotes'     : constants.DEFAULT_EMOTES,
@@ -103,6 +104,7 @@ loop   = asyncio.get_event_loop()
 client = discord.Client(loop=loop)
 
 def init():
+    """Initialize the bot."""
     global                  \
         client,             \
         command_dispatcher, \
@@ -198,6 +200,7 @@ def main():
         return
 
 def version():
+    """Get a nicely formatted version string."""
     assert '__version__' in globals(), 'No global __version__ variable'
     return 'DragonBot v{} (discord.py v{}){}{}'.format(
         __version__,
@@ -245,11 +248,13 @@ Commands:
 
 @command
 async def truth(client, message):
+    """Say the truth."""
     assert None not in (client, message), 'Got None, expected value'
     await client.send_message(message.channel, 'slushrfggts')
 
 @command
 async def show_help(client, message):
+    """Show help."""
     command, argstr = util.split_command(message)
     if argstr is None:
         await client.send_message(message.channel, help())
@@ -267,6 +272,7 @@ async def test(client, message):
 
 @command
 async def show_stats(client, message):
+    """Show session statistics."""
     stats['uptime']         = time.time() - stats['start time']
     stats['emotes known']   = len(emotes)
     stats['keywords known'] = len(keywords)
@@ -284,6 +290,7 @@ async def show_stats(client, message):
 
 @command
 async def say(client, message):
+    """Say something specified by the !say command."""
     command, argstr = split_command(message)
     try:
         channel_id, user_message = argstr.split(maxsplit=1)
@@ -301,6 +308,7 @@ async def say(client, message):
 
 @command
 async def insult(client, message):
+    """Handles the !insult commmand."""
     command, name = split_command(message)
     try:
         insult = get_insult(rate_limit=1.5)
@@ -347,6 +355,7 @@ async def set_current_game(client, message):
 
 @client.event
 async def on_ready():
+    """Event handler for becoming ready."""
     global server_emoji
     assert client is not None, 'client is None in on_ready()'
     logger.info('Bot is ready')
@@ -389,6 +398,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    """Event handler for messages."""
     stats['messages seen'] += 1
     if message.content.startswith(constants.COMMAND_PREFIX):
         if message.content == constants.COMMAND_PREFIX:
