@@ -19,7 +19,7 @@ import constants
 import insult as insult_module
 import util
 
-__version__ = '0.18.5'
+__version__ = '0.19.0'
 
 ### ARGUMENTS ###
 
@@ -157,6 +157,7 @@ def init():
     cd = CommandDispatcher(read_only=opts.read_only)
     cd.register("help", show_help)
     cd.register("insult", insult)
+    cd.register("play", set_current_game, may_use=owner_only)
     cd.register("say", say, may_use=owner_only)
     cd.register("stats", show_stats)
     cd.register("test", test, may_use=owner_only, rw=True)
@@ -223,6 +224,9 @@ Commands:
 
   {prefix}insult <someone's name>
     Insult someone with a random insult.
+
+  {prefix}play <game> <url>
+    Set the bot's status as playing the given game. Owner only.
 
   {prefix}say <channel ID> <message>
     Have the bot post a message in a given channel. Owner only.
@@ -317,6 +321,27 @@ async def insult(client, message):
             'Error retrieving insult from server.'
         )
         logger.warning('Error retrieving insult from server: %s', str(e))
+
+@command
+async def set_current_game(client, message):
+    """Handles the !play command."""
+    command, args = split_command(message)
+    try:
+        game, url = args.rsplit(maxsplit=1)
+    except ValueError:
+        await client.send_message(
+            message.channel,
+            'Need a game and its URL.'
+        )
+        return
+    game = discord.Game(
+        name=game,
+        url=url
+    )
+    try:
+        await client.change_presence(game=game)
+    except InvalidArgument:
+        await client.send_message('Error changing presence')
 
 ### EVENT HANDLERS ###
 
