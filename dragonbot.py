@@ -19,7 +19,7 @@ import constants
 import insult as insult_module
 import util
 
-__version__ = '0.19.0'
+__version__ = '0.19.1'
 
 ### ARGUMENTS ###
 
@@ -229,7 +229,8 @@ Commands:
     Insult someone with a random insult.
 
   {prefix}play <game> <url>
-    Set the bot's status as playing the given game. Owner only.
+    Set the bot's status as playing the given game. Owner only. The URL can be
+    "None".
 
   {prefix}say <channel ID> <message>
     Have the bot post a message in a given channel. Owner only.
@@ -342,6 +343,8 @@ async def set_current_game(client, message):
             'Need a game and its URL.'
         )
         return
+    if url == "None":
+        url = None
     game = discord.Game(
         name=game,
         url=url
