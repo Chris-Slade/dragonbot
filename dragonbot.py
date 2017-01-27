@@ -19,7 +19,7 @@ import constants
 import insult as insult_module
 import util
 
-__version__ = '0.19.1'
+__version__ = '0.20.0'
 
 ### ARGUMENTS ###
 
@@ -398,6 +398,19 @@ async def on_ready():
         for channel in server.channels:
             if channel.type == discord.ChannelType.text:
                 logger.info('Channel: %s %s', channel.name, channel.id)
+
+    if 'presence' in config:
+        presence = config['presence']
+        if 'playing' in presence:
+            playing = config['presence']['playing']
+            game = None
+            if 'name' in playing:
+                name = playing['name']
+                url = playing['url'] if 'url' in playing else None
+                game = discord.Game(name=name, url=url)
+                await client.change_presence(game=game)
+                logger.info('Set current game to %s', str(game))
+        # TODO: Support other presence options (status, AFK)
 
 @client.event
 async def on_message(message):
