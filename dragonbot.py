@@ -5,6 +5,7 @@ import collections
 import discord
 import json
 import logging
+import sys
 import time
 
 from urllib.error import URLError
@@ -87,6 +88,11 @@ def getopts():
         help='Run the bot in read-only mode, preventing functions that access'
             ' the disk from doing so.'
     )
+    parser.add_argument(
+        '--version',
+        action='store_true',
+        help='Print the version of the bot and the discord.py API and exit.'
+    )
     opts = parser.parse_args()
 
     opts.global_log = util.get_log_level(getattr(opts, 'global-log'))
@@ -118,6 +124,10 @@ def init():
 
     # Get options
     opts = getopts()
+
+    if (opts.version):
+        print(version())
+        sys.exit(0)
 
     # Initialize logger
     logging.basicConfig(
@@ -206,7 +216,8 @@ def version():
         __version__,
         discord.__version__,
         ' [DEBUG MODE]' if __debug__ else '',
-        ' [READ ONLY]' if hasattr(opts, 'read_only')
+        ' [READ ONLY]' if 'opts' in globals()
+            and hasattr(opts, 'read_only')
             and getattr(opts, 'read_only') else '',
     )
 
