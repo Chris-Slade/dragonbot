@@ -5,6 +5,8 @@ import collections
 import discord
 import json
 import logging
+import os
+import signal
 import sys
 import time
 
@@ -147,6 +149,18 @@ def init():
         logger.info('Exiting')
     atexit.register(log_exit)
 
+    # Add signal handler for restart signal
+    def restart(signal, frame):
+        global client
+        logger.info('Received restart signal')
+        try:
+            if client.is_logged_in:
+                client.logout()
+            os.execv(sys.executable, ['python'] + sys.argv)
+        except Exception as e:
+            logger.warning(e)
+    signal.signal(signal.SIGUSR1, restart)
+
     # Initialize config
     logger.info('Loading config')
     with open(opts.config, 'r', encoding='utf-8') as fh:
@@ -201,6 +215,7 @@ def init():
 def main():
     init()
     logger.info(version())
+    logger.info('PID is %d', os.getpid())
     assert version(), "version() should return a non-empty string, but didn't"
     stats['start time'] = time.time()
     try:
