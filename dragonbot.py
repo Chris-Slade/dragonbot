@@ -171,11 +171,13 @@ def init():
     # location have a clearly defined precedence over one another.
     if 'emotes_file' not in config:
         config['emotes_file'] = opts.emotes
+    logger.info('Emotes file is %s', config['emotes_file'])
     emotes = Emotes(config['emotes_file'])
 
     # Initialize keywords
     if 'keywords_file' not in config:
         config['keywords_file'] = opts.keywords
+    logger.info('Keywords file is %s', config['keywords_file'])
     keywords = Keywords(config['keywords_file'])
 
     # Set up command dispatcher
