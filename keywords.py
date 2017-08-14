@@ -52,6 +52,7 @@ Keywords:
         cd.register("removekeyword", self.remove_keyword, rw=True)
         cd.register("keywords",      self.list_keywords)
         cd.register("count",         self.show_count)
+        cd.register("refreshkeywords", self.refresh_keywords, may_use={config['owner_id']})
         self.logger.info('Registered commands')
 
     def update_automaton(self):
@@ -170,6 +171,11 @@ Keywords:
                 message.channel,
                 "That keyword doesn't exist!"
             )
+
+    @command_method
+    async def refresh_keywords(self, client, message):
+        self.keywords.load(self.keywords_file)
+        await client.send_message(message.channel, 'Keywords refreshed!')
 
     @command_method
     async def list_keywords(self, client, message):
