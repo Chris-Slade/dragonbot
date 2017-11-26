@@ -17,6 +17,9 @@ class Emotes(object):
         self.emotes = Storage(emotes_file)
         self.logger.info('Loaded %d emotes from disk', len(self.emotes))
 
+    def __len__(self):
+        return self.emotes.__len__()
+
     @staticmethod
     def help():
         return """```

@@ -18,6 +18,9 @@ class Keywords(object):
         self.logger.info('Loaded %d keywords from disk', len(self.keywords))
         self.update_automaton()
 
+    def __len__(self):
+        return self.keywords.__len__()
+
     @staticmethod
     def help():
         return """```

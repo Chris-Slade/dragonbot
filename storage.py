@@ -76,5 +76,8 @@ class Storage(dict):
         key = _normalize_key(key)
         return super().__contains__(key)
 
+    def __len__(self):
+        return super().__len__()
+
     def as_text_list(self):
         return ", ".join(sorted(self))
