@@ -186,6 +186,7 @@ def init():
     cd.register("help", show_help)
     cd.register("insult", insult)
     cd.register("play", set_current_game, may_use=owner_only)
+    cd.register("purge", purge, may_use=owner_only)
     cd.register("say", say, may_use=owner_only)
     cd.register("stats", show_stats)
     cd.register("test", test, may_use=owner_only, rw=True)
@@ -259,6 +260,11 @@ Commands:
   {prefix}play <game> <url>
     Set the bot's status as playing the given game. Owner only. The URL can be
     "None".
+
+  {prefix}purge <@user> <count>
+    Purges up to <count> messages from the mentioned <@user>. <count> must be
+    at least 2 but no more than 100. Deleted messages cannot be older than 14
+    days. Subject to the limitations imposed by the Discord API.
 
   {prefix}say <channel ID> <message>
     Have the bot post a message in a given channel. Owner only.
@@ -381,6 +387,66 @@ async def set_current_game(client, message):
         await client.change_presence(game=game)
     except InvalidArgument:
         await client.send_message('Error changing presence')
+
+@command
+async def purge(client, message):
+    """Handles the !purge command."""
+    command, args = split_command(message)
+    try:
+        user, count = args.split(maxsplit=1)
+    except ValueError:
+        await client.send_message(message.channel, 'Need a name and a count')
+        return
+    try:
+        count = int(count)
+    except ValueError:
+        await client.send_message(message.channel, 'Count must be an integer')
+        return
+
+    if count > 100:
+        await client.send_message(
+            message.channel,
+            "Can't delete more than 100 messages"
+        )
+        return
+    if count < 2:
+        await client.send_message(
+            message.channel,
+            "Can't delete fewer than 2 messages"
+        )
+        return
+
+    delete_me = []
+    async for message in client.logs_from(message.channel, limit=1000):
+        if message.author.mention == user:
+            delete_me.append(message)
+        if len(delete_me) >= count:
+            break
+    if delete_me:
+        try:
+            await client.delete_messages(delete_me)
+            await client.send_message(
+                message.channel,
+                'Deleted {} messages'.format(len(delete_me))
+            )
+        except discord.Forbidden:
+            await client.send_message(
+                message.channel,
+                "I'm not allowed to do that"
+            )
+        except discord.HTTPException as e:
+            await client.send_message(
+                message.channel,
+                'An error occurred' + (': ' + e.text if e.text else "")
+            )
+            logger.exception('Error deleting messages')
+        except Exception:
+            logger.exception('Error deleting messages')
+    else:
+        await client.send_message(
+            message.channel,
+            "I don't see any messages from that user in the recent history"
+        )
 
 ### EVENT HANDLERS ###
 
