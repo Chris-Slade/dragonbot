@@ -510,6 +510,11 @@ async def on_ready():
 async def on_message(message):
     """Event handler for messages."""
     stats['messages seen'] += 1
+    if message.author.id == '103226146363035648':
+        member = message.server.get_member(message.author.id)
+        if member.nick != 'Quail':
+            logging.info("Fixing Quail's nickname")
+            await client.change_nickname(member, 'Quail')
     if message.content.startswith(constants.COMMAND_PREFIX):
         if message.content == constants.COMMAND_PREFIX:
             logger.info('Ignoring null command')
