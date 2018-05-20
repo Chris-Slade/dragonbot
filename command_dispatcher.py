@@ -95,8 +95,9 @@ class CommandDispatcher(object):
         if command.may_use is not None:
             if message.author.id not in command.may_use:
                 raise CommandDispatcher.PermissionDenied(
-                    'User "{}#{}" does not have permission'
+                    '[%s] User "{}#{}" does not have permission'
                     ' to use command "{}"'.format(
+                        message.server,
                         message.author.name,
                         message.author.id,
                         command_name

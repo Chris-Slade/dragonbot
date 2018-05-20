@@ -507,14 +507,22 @@ async def on_message(message):
         if message.content == constants.COMMAND_PREFIX:
             logger.info('Ignoring null command')
             return
-        logger.info('Handling command message "%s"', message.content)
+        logger.info(
+            '[%s] Handling command message "%s"',
+            message.server,
+            message.content
+        )
 
         stats['commands seen'] += 1
 
         command, _ = split_command(message)
 
         if command is None:
-            logger.warning('Mishandled command message "%s"', message.content)
+            logger.warning(
+                '[%s] Mishandled command message "%s"',
+                message.server,
+                message.content
+            )
 
         assert command_dispatcher is not None
 
@@ -528,12 +536,16 @@ async def on_message(message):
         ) as e:
             await client.send_message(message.channel, str(e))
             logger.info(
-                'Exception executing command "%s": %s',
+                '[%s] Exception executing command "%s": %s',
                 command,
                 str(e)
             )
     elif message.clean_content.startswith(constants.EMOTE_PREFIX):
-        logger.info('Handling emote message "%s"', message.clean_content)
+        logger.info(
+            '[%s] Handling emote message "%s"',
+            message.server,
+            message.clean_content
+        )
         await emotes.display_emote(client, message)
         stats['emotes seen'] += 1
 

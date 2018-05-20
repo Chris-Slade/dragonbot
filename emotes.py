@@ -117,7 +117,8 @@ Emotes:
             del self.emotes[emote]
             self.emotes.save()
             self.logger.info(
-                'Emote "%s" deleted by "%s"',
+                '[%s] Emote "%s" deleted by "%s"',
+                message.server,
                 emote,
                 message.author.name
             )
@@ -139,7 +140,7 @@ Emotes:
         if len(self.emotes) == 0:
             await client.send_message(
                 message.channel,
-                "I don't have any emotes yet!"
+                "I don't have any emotes for this server yet!"
             )
         for chunk in util.chunker(
             self.emotes.as_text_list(),
