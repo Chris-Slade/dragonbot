@@ -121,7 +121,6 @@ def init():
         keywords,           \
         logger,             \
         opts,               \
-        server_emoji,       \
         stats
 
     # Get options
@@ -199,8 +198,6 @@ def init():
 
     stats = collections.defaultdict(int)
 
-    server_emoji = {}
-
     assert None not in (
         client,
         command_dispatcher,
@@ -209,7 +206,6 @@ def init():
         keywords,
         logger,
         opts,
-        server_emoji,
         stats
     ), 'Variable was not initialized'
 
@@ -453,7 +449,6 @@ async def purge(client, message):
 @client.event
 async def on_ready():
     """Event handler for becoming ready."""
-    global server_emoji
     assert client is not None, 'client is None in on_ready()'
     logger.info('Bot is ready')
     stats['connect time'] = time.time() - stats['start time']
@@ -472,16 +467,6 @@ async def on_ready():
             if opts.greet and server.default_channel is not None:
                 await client.send_message(server.default_channel, version())
 
-        # Collect server emoji
-        if server_emoji is None:
-            server_emoji = {}
-        for emoji in client.get_all_emojis():
-            if emoji.server.id not in server_emoji:
-                server_emoji[emoji.server.id] = {}
-            server_emoji[emoji.server.id][emoji.name] = emoji
-
-        for server in client.servers:
-            logger.info('Got %d emoji in server %s', len(server_emoji), server)
 
     else:
         logger.warning("Couldn't find servers")
