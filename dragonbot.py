@@ -458,40 +458,33 @@ async def on_ready():
     logger.info('Bot is ready')
     stats['connect time'] = time.time() - stats['start time']
 
-    if 'greetings_server' in config:
-        server = client.get_server(config['greetings_server'])
+    if 'servers' in config:
+        logger.info('Servers: %s', [ server.id for server in client.servers ])
         # Log server and default channel
-        logger.info("Logged into server %s", server)
-        if server.default_channel is not None:
-            logger.info("Default channel is %s", server.default_channel)
+        for server in client.servers:
+            logger.info("Logged into server %s", server)
+            if server.default_channel is not None:
+                logger.info("Default channel is %s", server.default_channel)
+            for channel in server.channels:
+                if channel.type == discord.ChannelType.text:
+                    logger.info('\tChannel: %s %s', channel.name, channel.id)
+
+            if opts.greet and server.default_channel is not None:
+                await client.send_message(server.default_channel, version())
 
         # Collect server emoji
         if server_emoji is None:
             server_emoji = {}
         for emoji in client.get_all_emojis():
-            server_emoji[emoji.name] = emoji
-        logger.info('Got %d emoji in this server', len(server_emoji))
-        logger.debug(', '.join(server_emoji.keys()))
+            if emoji.server.id not in server_emoji:
+                server_emoji[emoji.server.id] = {}
+            server_emoji[emoji.server.id][emoji.name] = emoji
 
-        # Post a greeting
-        if opts.greet:
-            await client.send_message(
-                server.get_channel(config['greetings_channel'])
-                    if 'greetings_channel' in config
-                    else server.default_channel,
-                "{} {}".format(
-                    version(),
-                    server_emoji['pride'] if 'pride' in server_emoji else ''
-                )
-            )
+        for server in client.servers:
+            logger.info('Got %d emoji in server %s', len(server_emoji), server)
+
     else:
-        logger.warning("Couldn't find server")
-    # Print list of servers and channels
-    for server in client.servers:
-        logger.info('Server: %s %s', server.name, server.id)
-        for channel in server.channels:
-            if channel.type == discord.ChannelType.text:
-                logger.info('Channel: %s %s', channel.name, channel.id)
+        logger.warning("Couldn't find servers")
 
     if 'presence' in config:
         presence = config['presence']
