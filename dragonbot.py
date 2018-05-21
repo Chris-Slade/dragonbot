@@ -30,10 +30,8 @@ def getopts():
     """Handle bot arguments."""
     defaults = {
         'config'     : constants.DEFAULT_CONFIG,
-        'emotes'     : constants.DEFAULT_EMOTES,
         'global-log' : constants.DEFAULT_LOG_LEVEL,
         'greet'      : True,
-        'keywords'   : constants.DEFAULT_KEYWORDS,
         'log'        : constants.DEFAULT_BOT_LOG_LEVEL,
         'read-only'  : False,
     }
@@ -44,12 +42,6 @@ def getopts():
         type=str,
         help='Specify the configuration file to use. Defaults to '
             + defaults['config'] + '.'
-    )
-    parser.add_argument(
-        '-e', '--emotes',
-        type=str,
-        help='Specify the emotes file to use. Defaults to '
-            + defaults['emotes'] + '.'
     )
     parser.add_argument(
         '--global-log',
@@ -71,12 +63,6 @@ def getopts():
         dest='greet',
         action='store_false',
         help='Tell the bot not to issue a greeting.'
-    )
-    parser.add_argument(
-        '-k', '--keywords',
-        type=str,
-        help='Specify the keywords file to use. Defaults to '
-            + defaults['keywords'] + '.'
     )
     parser.add_argument(
         '-l', '--log',
@@ -165,19 +151,18 @@ def init():
     with open(opts.config, 'r', encoding='utf-8') as fh:
         config = json.load(fh)
 
-    # Initialize emote module
-    # XXX This should be changed so the different sources of the emotes file
-    # location have a clearly defined precedence over one another.
-    if 'emotes_file' not in config:
-        config['emotes_file'] = opts.emotes
-    logger.info('Emotes file is %s', config['emotes_file'])
-    emotes = Emotes(config['emotes_file'])
+    # Initialize storage directory if needed
+    if 'storage_dir' not in config:
+        logger.warn('No storage directory specified, defaulting to ./storage/')
+        config['storage_dir'] = './storage/'
+    logger.info('Creating storage directory %s', config['storage_dir'])
+    os.makedirs(config['storage_dir'], exist_ok=True)
 
-    # Initialize keywords
-    if 'keywords_file' not in config:
-        config['keywords_file'] = opts.keywords
-    logger.info('Keywords file is %s', config['keywords_file'])
-    keywords = Keywords(config['keywords_file'])
+    # Initialize emote and keyword modules
+    logger.info('Initializing Emotes module')
+    emotes = Emotes()
+    logger.info('Initializing Keywords module')
+    keywords = Keywords()
 
     # Set up command dispatcher
     owner_only = { config['owner_id'] } # For registering commands as owner-only
@@ -209,7 +194,7 @@ def init():
         stats
     ), 'Variable was not initialized'
 
-    logger.info('Finished initializing')
+    logger.info('Finished pre-login initialization')
 
 def main():
     init()
@@ -449,15 +434,15 @@ async def purge(client, message):
 @client.event
 async def on_ready():
     """Event handler for becoming ready."""
+    global emotes, keywords
     assert client is not None, 'client is None in on_ready()'
     logger.info('Bot is ready')
     stats['connect time'] = time.time() - stats['start time']
 
     if 'servers' in config:
-        logger.info('Servers: %s', [ server.id for server in client.servers ])
         # Log server and default channel
         for server in client.servers:
-            logger.info("Logged into server %s", server)
+            logger.info("Logged into server %s %s", server, server.id)
             if server.default_channel is not None:
                 logger.info("Default channel is %s", server.default_channel)
             for channel in server.channels:
@@ -467,7 +452,8 @@ async def on_ready():
             if opts.greet and server.default_channel is not None:
                 await client.send_message(server.default_channel, version())
 
-
+            emotes.add_server(server, config['storage_dir'])
+            keywords.add_server(server, config['storage_dir'])
     else:
         logger.warning("Couldn't find servers")
 
@@ -488,51 +474,52 @@ async def on_ready():
 async def on_message(message):
     """Event handler for messages."""
     stats['messages seen'] += 1
-    if message.content.startswith(constants.COMMAND_PREFIX):
-        if message.content == constants.COMMAND_PREFIX:
-            logger.info('Ignoring null command')
-            return
-        logger.info(
-            '[%s] Handling command message "%s"',
-            message.server,
-            message.content
-        )
-
-        stats['commands seen'] += 1
-
-        command, _ = split_command(message)
-
-        if command is None:
-            logger.warning(
-                '[%s] Mishandled command message "%s"',
+    if message.author.id != client.user.id:
+        if message.content.startswith(constants.COMMAND_PREFIX):
+            if message.content == constants.COMMAND_PREFIX:
+                logger.info('Ignoring null command')
+                return
+            logger.info(
+                '[%s] Handling command message "%s"',
                 message.server,
                 message.content
             )
 
-        assert command_dispatcher is not None
+            stats['commands seen'] += 1
 
-        try:
-            await command_dispatcher.dispatch(client, command, message)
-            stats['commands run'] += 1
-        except (
-            CommandDispatcher.PermissionDenied,
-            CommandDispatcher.WriteDenied,
-            CommandDispatcher.UnknownCommand
-        ) as e:
-            await client.send_message(message.channel, str(e))
+            command, _ = split_command(message)
+
+            if command is None:
+                logger.warning(
+                    '[%s] Mishandled command message "%s"',
+                    message.server,
+                    message.content
+                )
+
+            assert command_dispatcher is not None
+
+            try:
+                await command_dispatcher.dispatch(client, command, message)
+                stats['commands run'] += 1
+            except (
+                CommandDispatcher.PermissionDenied,
+                CommandDispatcher.WriteDenied,
+                CommandDispatcher.UnknownCommand
+            ) as e:
+                await client.send_message(message.channel, str(e))
+                logger.info(
+                    '[%s] Exception executing command "%s": %s',
+                    command,
+                    str(e)
+                )
+        elif message.clean_content.startswith(constants.EMOTE_PREFIX):
             logger.info(
-                '[%s] Exception executing command "%s": %s',
-                command,
-                str(e)
+                '[%s] Handling emote message "%s"',
+                message.server,
+                message.clean_content
             )
-    elif message.clean_content.startswith(constants.EMOTE_PREFIX):
-        logger.info(
-            '[%s] Handling emote message "%s"',
-            message.server,
-            message.clean_content
-        )
-        await emotes.display_emote(client, message)
-        stats['emotes seen'] += 1
+            await emotes.display_emote(client, message)
+            stats['emotes seen'] += 1
 
     # Check for keywords
     await keywords.handle_keywords(client, message)

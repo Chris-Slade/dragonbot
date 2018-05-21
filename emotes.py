@@ -3,22 +3,39 @@ import logging
 import re
 
 from insult import random_insult
+import os
 from storage import Storage, KeyExistsError
-from util import command_method
+from util import command_method, server_command_method
 import constants
 import util
 
 class Emotes(object):
     """Emotes module for DragonBot."""
 
-    def __init__(self, emotes_file):
+    def __init__(self):
         self.logger = logging.getLogger('dragonbot.' + __name__)
-        self.emotes_file = emotes_file
-        self.emotes = Storage(emotes_file)
-        self.logger.info('Loaded %d emotes from disk', len(self.emotes))
+        self.emotes = {}
 
     def __len__(self):
         return self.emotes.__len__()
+
+    def add_server(self, server, storage_dir):
+        """Track emotes for a server."""
+        self.storage_dir = storage_dir
+        server_dir = os.path.join(
+            storage_dir,
+            '{}-{}'.format(util.normalize_path(server.name), server.id)
+        )
+        try:
+            os.mkdir(server_dir)
+        except FileExistsError:
+            pass
+        self.emotes[server.id] = Storage(os.path.join(server_dir, 'emotes.json'))
+        self.logger.info(
+            '[%s] Loaded %d emotes from disk',
+            server,
+            len(self.emotes[server.id])
+        )
 
     @staticmethod
     def help():
@@ -58,7 +75,7 @@ Emotes:
         cd.register("refreshemotes", self.refresh_emotes, may_use={config['owner_id']})
         self.logger.info('Registered commands')
 
-    @command_method
+    @server_command_method
     async def add_emote(self, client, message):
         command, argstr = util.split_command(message)
         try:
@@ -84,8 +101,8 @@ Emotes:
             return
 
         try:
-            self.emotes[emote] = body
-            self.emotes.save()
+            self.emotes[message.server.id][emote] = body
+            self.emotes[message.server.id].save()
             self.logger.info(
                 'Emote "%s" added by "%s"',
                 emote,
@@ -102,7 +119,7 @@ Emotes:
             )
     # End of add_emote
 
-    @command_method
+    @server_command_method
     async def remove_emote(self, client, message):
         command, argstr = util.split_command(message)
         if argstr is None:
@@ -114,8 +131,8 @@ Emotes:
 
         emote = argstr
         try:
-            del self.emotes[emote]
-            self.emotes.save()
+            del self.emotes[message.server.id][emote]
+            self.emotes[message.server.id].save()
             self.logger.info(
                 '[%s] Emote "%s" deleted by "%s"',
                 message.server,
@@ -130,12 +147,13 @@ Emotes:
             )
     # End of remove_emote
 
-    @command_method
+    @server_command_method
     async def refresh_emotes(self, client, message):
+        # FIXME
         self.emotes.load(self.emotes_file)
         await client.send_message(message.channel, 'Emotes refreshed!')
 
-    @command_method
+    @server_command_method
     async def list_emotes(self, client, message):
         if len(self.emotes) == 0:
             await client.send_message(
@@ -143,17 +161,18 @@ Emotes:
                 "I don't have any emotes for this server yet!"
             )
         for chunk in util.chunker(
-            self.emotes.as_text_list(),
+            self.emotes[message.server.id].as_text_list(),
             constants.MAX_CHARACTERS
         ):
             await client.send_message(message.channel, chunk)
 
-    @command_method
+    @server_command_method
     async def display_emote(self, client, message):
         emote = message.clean_content[1:]
-        if emote in self.emotes:
-            self.logger.debug('Posting emote "%s"', self.emotes[emote])
-            await client.send_message(message.channel, self.emotes[emote])
+        server_emotes = self.emotes[message.server.id]
+        if emote in server_emotes:
+            self.logger.debug('Posting emote "%s"', server_emotes[emote])
+            await client.send_message(message.channel, server_emotes[emote])
         else:
             self.logger.debug('Unknown emote')
             await client.add_reaction(message, constants.IDK_REACTION)
