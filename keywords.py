@@ -1,25 +1,42 @@
 import ahocorasick
 import discord
 import logging
+import os
 import re
 
 from storage import Storage
-from util import command_method
+from util import command_method, server_command_method
 import constants
 import util
 
 class Keywords(object):
     """A keywords module for DragonBot."""
 
-    def __init__(self, keywords_file):
+    def __init__(self): # , keywords_file):
         self.logger = logging.getLogger('dragonbot.' + __name__)
-        self.keywords_file = keywords_file
-        self.keywords = Storage(keywords_file)
-        self.logger.info('Loaded %d keywords from disk', len(self.keywords))
-        self.update_automaton()
+        self.keywords = {}
+        self.automata = {}
 
     def __len__(self):
         return self.keywords.__len__()
+
+    def add_server(self, server, storage_dir):
+        """Track emotes for a server."""
+        server_dir = os.path.join(
+            storage_dir,
+            '{}-{}'.format(util.normalize_path(server.name), server.id)
+        )
+        try:
+            os.mkdir(server_dir)
+        except FileExistsError:
+            pass
+        self.keywords[server.id] = Storage(os.path.join(server_dir, 'keywords.json'))
+        self.logger.info(
+            '[%s] Loaded %d keywords from disk',
+            server,
+            len(self.keywords[server.id])
+        )
+        self.update_automaton(server)
 
     @staticmethod
     def help():
@@ -58,15 +75,19 @@ Keywords:
         cd.register("refreshkeywords", self.refresh_keywords, may_use={config['owner_id']})
         self.logger.info('Registered commands')
 
-    def update_automaton(self):
+    def update_automaton(self, server):
         # Make a new Aho-Corasick automaton
-        self.automaton = ahocorasick.Automaton(str)
+        self.automata[server.id] = ahocorasick.Automaton(str)
+        automaton = self.automata[server.id]
         # Add each keyword
-        for keyword in self.keywords:
-            self.automaton.add_word(keyword, keyword)
+        for keyword in self.keywords[server.id]:
+            automaton.add_word(keyword, keyword)
         # Finalize the automaton for searching
-        self.automaton.make_automaton()
-        self.logger.debug('Updated automaton')
+        automaton.make_automaton()
+        self.logger.debug('[%s] Updated automaton', server)
+
+    def count_keywords(self):
+        return sum([ len(self.keywords[server]) for server in self.keywords ])
 
     @command_method
     async def handle_keywords(self, client, message):
@@ -74,26 +95,29 @@ Keywords:
         actions when they are found.
         """
         assert message is not None
+        if message.server.id is None:
+            return
 
+        server_keywords = self.keywords[message.server.id]
         content = message.clean_content.casefold()
         seen = set()
-        for index, keyword in self.automaton.iter(content):
+        for index, keyword in self.automata[message.server.id].iter(content):
             # Count keyword
             if keyword in seen:
                 continue
             seen.add(keyword)
-            self.keywords[keyword]['count'] += 1
-            count = self.keywords[keyword]['count']
+            server_keywords[keyword]['count'] += 1
+            count = server_keywords[keyword]['count']
             self.logger.info('Incremented count of "%s" to %d', keyword, count)
             if util.is_get(count):
                 await client.send_message(
                     message.channel,
                     '{} #{}'.format(keyword, count)
                 )
-                self.keywords.save()
+                server_keywords.save()
 
             # Show reactions
-            reactions = self.keywords[keyword]['reactions']
+            reactions = server_keywords[keyword]['reactions']
             self.logger.debug(
                 'Got reactions [%s] for keyword "%s"',
                 ", ".join(reactions) if reactions is not None else "None",
@@ -113,15 +137,16 @@ Keywords:
                         reaction
                     )
 
-    @command_method
+    @server_command_method
     async def add_keyword(self, client, message):
+        server_keywords = self.keywords[message.server.id]
         command, argstr = util.split_command(message)
         try:
             name, emote = argstr.split(maxsplit=1)
         except:
             # If we just have a name, add it as a keyword with no reaction.
-            self.keywords[argstr] = { 'reactions' : [], 'count' : 0 }
-            self.update_automaton()
+            server_keywords[argstr] = { 'reactions' : [], 'count' : 0 }
+            self.update_automaton(message.server)
             await client.send_message(message.channel, 'Keyword added!')
             self.logger.info(
                 '%s added keyword "%s"',
@@ -136,12 +161,12 @@ Keywords:
             emote = match.group(1)
 
         # Assume an emoji is correct and just store it
-        if name in self.keywords:
-            self.keywords[name]['reactions'].append(emote)
+        if name in server_keywords:
+            server_keywords[name]['reactions'].append(emote)
         else:
-            self.keywords[name] = { 'reactions' : [emote], 'count' : 0 }
-        self.keywords.save()
-        self.update_automaton()
+            server_keywords[name] = { 'reactions' : [emote], 'count' : 0 }
+        server_keywords.save()
+        self.update_automaton(message.server)
         await client.send_message(
             message.channel,
             'Added keyword reaction!'
@@ -153,13 +178,14 @@ Keywords:
             emote
         )
 
-    @command_method
+    @server_command_method
     async def remove_keyword(self, client, message):
+        server_keywords = self.keywords[message.server.id]
         command, name = util.split_command(message)
         try:
-            del self.keywords[name]
-            self.keywords.save()
-            self.update_automaton()
+            del server_keywords[name]
+            server_keywords.save()
+            self.update_automaton(message.server)
             await client.send_message(
                 message.channel,
                 'Removed keyword!'
@@ -175,28 +201,30 @@ Keywords:
                 "That keyword doesn't exist!"
             )
 
-    @command_method
+    @server_command_method
     async def refresh_keywords(self, client, message):
         self.keywords.load(self.keywords_file)
         await client.send_message(message.channel, 'Keywords refreshed!')
 
-    @command_method
+    @server_command_method
     async def list_keywords(self, client, message):
-        if len(self.keywords) == 0:
+        server_keywords = self.keywords[message.server.id]
+        if len(server_keywords) == 0:
             await client.send_message(
                 message.channel,
-                "I don't have any keywords yet!"
+                "I don't have any keywords for this server yet!"
             )
-        for chunk in util.chunker(self.keywords.as_text_list(), 2000):
+        for chunk in util.chunker(server_keywords.as_text_list(), 2000):
             await client.send_message(message.channel, chunk)
 
-    @command_method
+    @server_command_method
     async def show_count(self, client, message):
+        server_keywords = self.keywords[message.server.id]
         command, keyword = util.split_command(message)
-        if keyword in self.keywords:
+        if keyword in server_keywords:
             await client.send_message(
                 message.channel,
-                self.keywords[keyword]['count']
+                server_keywords['count']
             )
         else:
             await client.send_message(message.channel, constants.IDK_REACTION)

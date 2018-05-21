@@ -30,10 +30,8 @@ def getopts():
     """Handle bot arguments."""
     defaults = {
         'config'     : constants.DEFAULT_CONFIG,
-        'emotes'     : constants.DEFAULT_EMOTES,
         'global-log' : constants.DEFAULT_LOG_LEVEL,
         'greet'      : True,
-        'keywords'   : constants.DEFAULT_KEYWORDS,
         'log'        : constants.DEFAULT_BOT_LOG_LEVEL,
         'read-only'  : False,
     }
@@ -44,12 +42,6 @@ def getopts():
         type=str,
         help='Specify the configuration file to use. Defaults to '
             + defaults['config'] + '.'
-    )
-    parser.add_argument(
-        '-e', '--emotes',
-        type=str,
-        help='Specify the emotes file to use. Defaults to '
-            + defaults['emotes'] + '.'
     )
     parser.add_argument(
         '--global-log',
@@ -71,12 +63,6 @@ def getopts():
         dest='greet',
         action='store_false',
         help='Tell the bot not to issue a greeting.'
-    )
-    parser.add_argument(
-        '-k', '--keywords',
-        type=str,
-        help='Specify the keywords file to use. Defaults to '
-            + defaults['keywords'] + '.'
     )
     parser.add_argument(
         '-l', '--log',
@@ -121,7 +107,6 @@ def init():
         keywords,           \
         logger,             \
         opts,               \
-        server_emoji,       \
         stats
 
     # Get options
@@ -166,19 +151,18 @@ def init():
     with open(opts.config, 'r', encoding='utf-8') as fh:
         config = json.load(fh)
 
-    # Initialize emote module
-    # XXX This should be changed so the different sources of the emotes file
-    # location have a clearly defined precedence over one another.
-    if 'emotes_file' not in config:
-        config['emotes_file'] = opts.emotes
-    logger.info('Emotes file is %s', config['emotes_file'])
-    emotes = Emotes(config['emotes_file'])
+    # Initialize storage directory if needed
+    if 'storage_dir' not in config:
+        logger.warn('No storage directory specified, defaulting to ./storage/')
+        config['storage_dir'] = './storage/'
+    logger.info('Creating storage directory %s', config['storage_dir'])
+    os.makedirs(config['storage_dir'], exist_ok=True)
 
-    # Initialize keywords
-    if 'keywords_file' not in config:
-        config['keywords_file'] = opts.keywords
-    logger.info('Keywords file is %s', config['keywords_file'])
-    keywords = Keywords(config['keywords_file'])
+    # Initialize emote and keyword modules
+    logger.info('Initializing Emotes module')
+    emotes = Emotes()
+    logger.info('Initializing Keywords module')
+    keywords = Keywords()
 
     # Set up command dispatcher
     owner_only = { config['owner_id'] } # For registering commands as owner-only
@@ -199,8 +183,6 @@ def init():
 
     stats = collections.defaultdict(int)
 
-    server_emoji = {}
-
     assert None not in (
         client,
         command_dispatcher,
@@ -209,11 +191,10 @@ def init():
         keywords,
         logger,
         opts,
-        server_emoji,
         stats
     ), 'Variable was not initialized'
 
-    logger.info('Finished initializing')
+    logger.info('Finished pre-login initialization')
 
 def main():
     init()
@@ -309,8 +290,8 @@ async def test(client, message):
 async def show_stats(client, message):
     """Show session statistics."""
     stats['uptime']         = time.time() - stats['start time']
-    stats['emotes known']   = len(emotes)
-    stats['keywords known'] = len(keywords)
+    stats['emotes known']   = emotes.count_emotes()
+    stats['keywords known'] = keywords.count_keywords()
 
     sb = ["```Session statistics:"]
 
@@ -453,45 +434,28 @@ async def purge(client, message):
 @client.event
 async def on_ready():
     """Event handler for becoming ready."""
-    global server_emoji
+    global emotes, keywords
     assert client is not None, 'client is None in on_ready()'
     logger.info('Bot is ready')
     stats['connect time'] = time.time() - stats['start time']
 
-    if 'greetings_server' in config:
-        server = client.get_server(config['greetings_server'])
+    if 'servers' in config:
         # Log server and default channel
-        logger.info("Logged into server %s", server)
-        if server.default_channel is not None:
-            logger.info("Default channel is %s", server.default_channel)
+        for server in client.servers:
+            logger.info("Logged into server %s %s", server, server.id)
+            if server.default_channel is not None:
+                logger.info("Default channel is %s", server.default_channel)
+            for channel in server.channels:
+                if channel.type == discord.ChannelType.text:
+                    logger.info('\tChannel: %s %s', channel.name, channel.id)
 
-        # Collect server emoji
-        if server_emoji is None:
-            server_emoji = {}
-        for emoji in client.get_all_emojis():
-            server_emoji[emoji.name] = emoji
-        logger.info('Got %d emoji in this server', len(server_emoji))
-        logger.debug(', '.join(server_emoji.keys()))
+            if opts.greet and server.default_channel is not None:
+                await client.send_message(server.default_channel, version())
 
-        # Post a greeting
-        if opts.greet:
-            await client.send_message(
-                server.get_channel(config['greetings_channel'])
-                    if 'greetings_channel' in config
-                    else server.default_channel,
-                "{} {}".format(
-                    version(),
-                    server_emoji['pride'] if 'pride' in server_emoji else ''
-                )
-            )
+            emotes.add_server(server, config['storage_dir'])
+            keywords.add_server(server, config['storage_dir'])
     else:
-        logger.warning("Couldn't find server")
-    # Print list of servers and channels
-    for server in client.servers:
-        logger.info('Server: %s %s', server.name, server.id)
-        for channel in server.channels:
-            if channel.type == discord.ChannelType.text:
-                logger.info('Channel: %s %s', channel.name, channel.id)
+        logger.warning("Couldn't find servers")
 
     if 'presence' in config:
         presence = config['presence']
@@ -510,18 +474,31 @@ async def on_ready():
 async def on_message(message):
     """Event handler for messages."""
     stats['messages seen'] += 1
+
+    # Don't process the bot's messages
+    if message.author.id == client.user.id:
+        return
+
     if message.content.startswith(constants.COMMAND_PREFIX):
         if message.content == constants.COMMAND_PREFIX:
             logger.info('Ignoring null command')
             return
-        logger.info('Handling command message "%s"', message.content)
+        logger.info(
+            '[%s] Handling command message "%s"',
+            message.server,
+            message.content
+        )
 
         stats['commands seen'] += 1
 
         command, _ = split_command(message)
 
         if command is None:
-            logger.warning('Mishandled command message "%s"', message.content)
+            logger.warning(
+                '[%s] Mishandled command message "%s"',
+                message.server,
+                message.content
+            )
 
         assert command_dispatcher is not None
 
@@ -535,12 +512,16 @@ async def on_message(message):
         ) as e:
             await client.send_message(message.channel, str(e))
             logger.info(
-                'Exception executing command "%s": %s',
+                '[%s] Exception executing command "%s": %s',
                 command,
                 str(e)
             )
     elif message.clean_content.startswith(constants.EMOTE_PREFIX):
-        logger.info('Handling emote message "%s"', message.clean_content)
+        logger.info(
+            '[%s] Handling emote message "%s"',
+            message.server,
+            message.clean_content
+        )
         await emotes.display_emote(client, message)
         stats['emotes seen'] += 1
 
