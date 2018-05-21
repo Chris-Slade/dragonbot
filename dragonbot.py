@@ -22,7 +22,7 @@ import constants
 import insult as insult_module
 import util
 
-__version__ = '1.0.1'
+__version__ = '1.1.0'
 
 ### ARGUMENTS ###
 
@@ -175,6 +175,7 @@ def init():
     cd.register("stats", show_stats)
     cd.register("test", test, may_use=owner_only, rw=True)
     cd.register("truth", truth)
+    cd.register("version", version_command)
     emotes.register_commands(cd, config)
     keywords.register_commands(cd, config)
     command_dispatcher = cd # Make global
@@ -258,6 +259,9 @@ Commands:
 
   {prefix}truth
     Tell the truth.
+
+  {prefix}version
+    Say the bot's version.
 ```""".format(version=version(), prefix=constants.COMMAND_PREFIX)
 
 ### COMMANDS ###
@@ -267,6 +271,11 @@ async def truth(client, message):
     """Say the truth."""
     assert None not in (client, message), 'Got None, expected value'
     await client.send_message(message.channel, 'slushrfggts')
+
+@command
+async def version_command(client, message):
+    """Say the bot's version."""
+    await client.send_message(message.channel, version())
 
 @command
 async def show_help(client, message):
