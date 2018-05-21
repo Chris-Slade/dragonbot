@@ -95,7 +95,7 @@ Keywords:
         actions when they are found.
         """
         assert message is not None
-        if message.server.id is None:
+        if message.server is None:
             return
 
         server_keywords = self.keywords[message.server.id]

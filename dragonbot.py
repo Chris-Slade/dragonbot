@@ -22,7 +22,7 @@ import constants
 import insult as insult_module
 import util
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 ### ARGUMENTS ###
 
@@ -308,6 +308,9 @@ async def show_stats(client, message):
 async def say(client, message):
     """Say something specified by the !say command."""
     command, argstr = split_command(message)
+    if command is None or argstr is None:
+        await client.send_message(message.channel, 'Nothing to say!')
+        return
     try:
         channel_id, user_message = argstr.split(maxsplit=1)
     except ValueError:
