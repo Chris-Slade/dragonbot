@@ -86,6 +86,9 @@ Keywords:
         automaton.make_automaton()
         self.logger.debug('[%s] Updated automaton', server)
 
+    def count_keywords(self):
+        return sum([ len(self.keywords[server]) for server in self.keywords ])
+
     @command_method
     async def handle_keywords(self, client, message):
         """Processes a message, checking it for keywords and performing

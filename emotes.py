@@ -75,6 +75,9 @@ Emotes:
         cd.register("refreshemotes", self.refresh_emotes, may_use={config['owner_id']})
         self.logger.info('Registered commands')
 
+    def count_emotes(self):
+        return sum([ len(self.emotes[server]) for server in self.emotes ])
+
     @server_command_method
     async def add_emote(self, client, message):
         command, argstr = util.split_command(message)

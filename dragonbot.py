@@ -290,8 +290,8 @@ async def test(client, message):
 async def show_stats(client, message):
     """Show session statistics."""
     stats['uptime']         = time.time() - stats['start time']
-    stats['emotes known']   = len(emotes)
-    stats['keywords known'] = len(keywords)
+    stats['emotes known']   = emotes.count_emotes()
+    stats['keywords known'] = keywords.count_keywords()
 
     sb = ["```Session statistics:"]
 
@@ -474,52 +474,56 @@ async def on_ready():
 async def on_message(message):
     """Event handler for messages."""
     stats['messages seen'] += 1
-    if message.author.id != client.user.id:
-        if message.content.startswith(constants.COMMAND_PREFIX):
-            if message.content == constants.COMMAND_PREFIX:
-                logger.info('Ignoring null command')
-                return
-            logger.info(
-                '[%s] Handling command message "%s"',
+
+    # Don't process the bot's messages
+    if message.author.id == client.user.id:
+        return
+
+    if message.content.startswith(constants.COMMAND_PREFIX):
+        if message.content == constants.COMMAND_PREFIX:
+            logger.info('Ignoring null command')
+            return
+        logger.info(
+            '[%s] Handling command message "%s"',
+            message.server,
+            message.content
+        )
+
+        stats['commands seen'] += 1
+
+        command, _ = split_command(message)
+
+        if command is None:
+            logger.warning(
+                '[%s] Mishandled command message "%s"',
                 message.server,
                 message.content
             )
 
-            stats['commands seen'] += 1
+        assert command_dispatcher is not None
 
-            command, _ = split_command(message)
-
-            if command is None:
-                logger.warning(
-                    '[%s] Mishandled command message "%s"',
-                    message.server,
-                    message.content
-                )
-
-            assert command_dispatcher is not None
-
-            try:
-                await command_dispatcher.dispatch(client, command, message)
-                stats['commands run'] += 1
-            except (
-                CommandDispatcher.PermissionDenied,
-                CommandDispatcher.WriteDenied,
-                CommandDispatcher.UnknownCommand
-            ) as e:
-                await client.send_message(message.channel, str(e))
-                logger.info(
-                    '[%s] Exception executing command "%s": %s',
-                    command,
-                    str(e)
-                )
-        elif message.clean_content.startswith(constants.EMOTE_PREFIX):
+        try:
+            await command_dispatcher.dispatch(client, command, message)
+            stats['commands run'] += 1
+        except (
+            CommandDispatcher.PermissionDenied,
+            CommandDispatcher.WriteDenied,
+            CommandDispatcher.UnknownCommand
+        ) as e:
+            await client.send_message(message.channel, str(e))
             logger.info(
-                '[%s] Handling emote message "%s"',
-                message.server,
-                message.clean_content
+                '[%s] Exception executing command "%s": %s',
+                command,
+                str(e)
             )
-            await emotes.display_emote(client, message)
-            stats['emotes seen'] += 1
+    elif message.clean_content.startswith(constants.EMOTE_PREFIX):
+        logger.info(
+            '[%s] Handling emote message "%s"',
+            message.server,
+            message.clean_content
+        )
+        await emotes.display_emote(client, message)
+        stats['emotes seen'] += 1
 
     # Check for keywords
     await keywords.handle_keywords(client, message)
