@@ -224,7 +224,7 @@ Keywords:
         if keyword in server_keywords:
             await client.send_message(
                 message.channel,
-                server_keywords['count']
+                server_keywords[keyword]['count']
             )
         else:
             await client.send_message(message.channel, constants.IDK_REACTION)
