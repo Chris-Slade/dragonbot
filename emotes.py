@@ -178,6 +178,7 @@ Emotes:
             await client.send_message(message.channel, server_emotes[emote])
         else:
             self.logger.debug('Unknown emote')
-            await client.add_reaction(message, constants.IDK_REACTION)
+            if constants.IDK_REACTION is not None:
+                await client.add_reaction(message, constants.IDK_REACTION)
 
 # End of Emotes

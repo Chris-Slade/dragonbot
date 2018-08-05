@@ -227,4 +227,5 @@ Keywords:
                 server_keywords[keyword]['count']
             )
         else:
-            await client.send_message(message.channel, constants.IDK_REACTION)
+            if constants.IDK_REACTION is not None:
+                await client.send_message(message.channel, constants.IDK_REACTION)

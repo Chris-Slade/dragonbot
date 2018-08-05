@@ -3,7 +3,7 @@ MAX_REACTIONS = 20
 # Maximum number of characters a text message may contain.
 MAX_CHARACTERS = 2000
 # For when the bot doesn't know how to respond to something.
-IDK_REACTION = '❔'
+IDK_REACTION = None # '❔'
 # Prefix for command messages
 COMMAND_PREFIX = '!'
 # Prefix for emote messages

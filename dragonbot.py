@@ -22,7 +22,7 @@ import constants
 import insult as insult_module
 import util
 
-__version__ = '1.1.1'
+__version__ = '1.2.0'
 
 ### ARGUMENTS ###
 
