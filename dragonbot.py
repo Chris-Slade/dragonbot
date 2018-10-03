@@ -30,11 +30,11 @@ def getopts():
     """Handle bot arguments."""
     defaults = {
         'config'     : constants.DEFAULT_CONFIG,
-        'env-config' : None,
-        'global-log' : constants.DEFAULT_LOG_LEVEL,
+        'env_config' : constants.DEFAULT_ENV_CONFIG,
+        'global_log' : constants.DEFAULT_LOG_LEVEL,
         'greet'      : True,
         'log'        : constants.DEFAULT_BOT_LOG_LEVEL,
-        'read-only'  : False,
+        'read_only'  : False,
     }
     parser = argparse.ArgumentParser(description='Discord chat bot')
     parser.set_defaults(**defaults)
@@ -57,7 +57,7 @@ def getopts():
         help='Set the logging level for all modules to the given level. Can be'
             ' one of (from least to most verbose):'
             ' DEBUG, INFO, WARNING, ERROR, CRITICAL.'
-            ' Defaults to ' + defaults['global-log'] + '.'
+            ' Defaults to ' + defaults['global_log'] + '.'
     )
     parser.add_argument(
         '--greet',
@@ -91,13 +91,8 @@ def getopts():
     )
     opts = parser.parse_args()
 
-    opts.global_log = util.get_log_level(getattr(opts, 'global-log'))
-    if getattr(opts, 'global-log') is None:
-        opts.global_log = util.get_log_level(defaults['global-log'])
-    opts.log = util.get_log_level(getattr(opts, 'log'))
-    if getattr(opts, 'log') is None:
-        opts.log = util.get_log_level(defaults['log'])
-    opts.env_config = getattr(opts, 'env-config')
+    opts.global_log = util.get_log_level(opts.global_log)
+    opts.log = util.get_log_level(opts.log)
 
     return opts
 
