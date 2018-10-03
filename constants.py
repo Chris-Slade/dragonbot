@@ -14,6 +14,9 @@ DEFAULT_ENV_CONFIG = 'DRAGONBOT_CONFIG'
 DEFAULT_LOG_LEVEL = 'WARNING'
 DEFAULT_BOT_LOG_LEVEL = 'INFO'
 
+# TODO Make this configurable
+INSULTS_ENV_VAR = 'DRAGONBOT_INSULTS'
+
 LOG_FORMAT = ' | '.join([
     '%(asctime)s',
     '%(levelname)s',
