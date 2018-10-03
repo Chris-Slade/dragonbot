@@ -72,7 +72,7 @@ def server_command_method(command):
     async def wrapper(self, client,  message):
         assert client is not None, 'Got None for client'
         assert message is not None, 'Got None for message'
-        if message.server is None:
+        if message.guild is None:
             await client.send_message(
                 message.channel,
                 'This command can only be used in a server context.'

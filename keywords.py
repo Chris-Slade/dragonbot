@@ -30,7 +30,7 @@ class Keywords(object):
             os.mkdir(server_dir)
         except FileExistsError:
             pass
-        self.keywords[server.id] = Storage(os.path.join(server_dir, 'keywords.json'))
+        self.keywords[int(server.id)] = Storage(os.path.join(server_dir, 'keywords.json'))
         self.logger.info(
             '[%s] Loaded %d keywords from disk',
             server,
@@ -95,13 +95,18 @@ Keywords:
         actions when they are found.
         """
         assert message is not None
-        if message.server is None:
+        if message.guild is None:
             return
+        assert message.guild.id in self.keywords, \
+            'ID {} not in keywords, which has keys {}'.format(
+                message.guild.id,
+                ', '.join(self.keywords.keys())
+            )
 
-        server_keywords = self.keywords[message.server.id]
+        server_keywords = self.keywords[message.guild.id]
         content = message.clean_content.casefold()
         seen = set()
-        for index, keyword in self.automata[message.server.id].iter(content):
+        for index, keyword in self.automata[message.guild.id].iter(content):
             # Count keyword
             if keyword in seen:
                 continue
@@ -126,7 +131,7 @@ Keywords:
             for reaction in reactions:
                 self.logger.info('Reacting with "%s"', reaction)
                 try:
-                    await client.add_reaction(message, reaction)
+                    await message.add_reaction(reaction)
                 except discord.errors.Forbidden:
                     self.logger.info('Reached max number of reactions')
                     return
@@ -139,14 +144,14 @@ Keywords:
 
     @server_command_method
     async def add_keyword(self, client, message):
-        server_keywords = self.keywords[message.server.id]
+        server_keywords = self.keywords[message.guild.id]
         command, argstr = util.split_command(message)
         try:
             name, emote = argstr.split(maxsplit=1)
         except:
             # If we just have a name, add it as a keyword with no reaction.
             server_keywords[argstr] = { 'reactions' : [], 'count' : 0 }
-            self.update_automaton(message.server)
+            self.update_automaton(message.guild)
             await client.send_message(message.channel, 'Keyword added!')
             self.logger.info(
                 '%s added keyword "%s"',
@@ -166,7 +171,7 @@ Keywords:
         else:
             server_keywords[name] = { 'reactions' : [emote], 'count' : 0 }
         server_keywords.save()
-        self.update_automaton(message.server)
+        self.update_automaton(message.guild)
         await client.send_message(
             message.channel,
             'Added keyword reaction!'
@@ -180,12 +185,12 @@ Keywords:
 
     @server_command_method
     async def remove_keyword(self, client, message):
-        server_keywords = self.keywords[message.server.id]
+        server_keywords = self.keywords[message.guild.id]
         command, name = util.split_command(message)
         try:
             del server_keywords[name]
             server_keywords.save()
-            self.update_automaton(message.server)
+            self.update_automaton(message.guild)
             await client.send_message(
                 message.channel,
                 'Removed keyword!'
@@ -208,7 +213,7 @@ Keywords:
 
     @server_command_method
     async def list_keywords(self, client, message):
-        server_keywords = self.keywords[message.server.id]
+        server_keywords = self.keywords[message.guild.id]
         if len(server_keywords) == 0:
             await client.send_message(
                 message.channel,
@@ -219,7 +224,7 @@ Keywords:
 
     @server_command_method
     async def show_count(self, client, message):
-        server_keywords = self.keywords[message.server.id]
+        server_keywords = self.keywords[message.guild.id]
         command, keyword = util.split_command(message)
         if keyword in server_keywords:
             await client.send_message(

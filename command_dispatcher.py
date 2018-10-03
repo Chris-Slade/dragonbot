@@ -97,7 +97,7 @@ class CommandDispatcher(object):
                 raise CommandDispatcher.PermissionDenied(
                     '[%s] User "{}#{}" does not have permission'
                     ' to use command "{}"'.format(
-                        message.server,
+                        message.guild,
                         message.author.name,
                         message.author.id,
                         command_name

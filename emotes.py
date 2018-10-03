@@ -30,7 +30,7 @@ class Emotes(object):
             os.mkdir(server_dir)
         except FileExistsError:
             pass
-        self.emotes[server.id] = Storage(os.path.join(server_dir, 'emotes.json'))
+        self.emotes[int(server.id)] = Storage(os.path.join(server_dir, 'emotes.json'))
         self.logger.info(
             '[%s] Loaded %d emotes from disk',
             server,
@@ -104,8 +104,8 @@ Emotes:
             return
 
         try:
-            self.emotes[message.server.id][emote] = body
-            self.emotes[message.server.id].save()
+            self.emotes[message.guild.id][emote] = body
+            self.emotes[message.guild.id].save()
             self.logger.info(
                 'Emote "%s" added by "%s"',
                 emote,
@@ -134,11 +134,11 @@ Emotes:
 
         emote = argstr
         try:
-            del self.emotes[message.server.id][emote]
-            self.emotes[message.server.id].save()
+            del self.emotes[message.guild.id][emote]
+            self.emotes[message.guild.id].save()
             self.logger.info(
                 '[%s] Emote "%s" deleted by "%s"',
-                message.server,
+                message.guild,
                 emote,
                 message.author.name
             )
@@ -164,7 +164,7 @@ Emotes:
                 "I don't have any emotes for this server yet!"
             )
         for chunk in util.chunker(
-            self.emotes[message.server.id].as_text_list(),
+            self.emotes[message.guild.id].as_text_list(),
             constants.MAX_CHARACTERS
         ):
             await client.send_message(message.channel, chunk)
@@ -172,13 +172,13 @@ Emotes:
     @server_command_method
     async def display_emote(self, client, message):
         emote = message.clean_content[1:]
-        server_emotes = self.emotes[message.server.id]
+        server_emotes = self.emotes[message.guild.id]
         if emote in server_emotes:
             self.logger.debug('Posting emote "%s"', server_emotes[emote])
             await client.send_message(message.channel, server_emotes[emote])
         else:
             self.logger.debug('Unknown emote')
             if constants.IDK_REACTION is not None:
-                await client.add_reaction(message, constants.IDK_REACTION)
+                await message.add_reaction(constants.IDK_REACTION)
 
 # End of Emotes

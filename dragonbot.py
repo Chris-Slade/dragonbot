@@ -472,15 +472,21 @@ async def on_ready():
 
     if 'servers' in config:
         # Log server and default channel
-        for server in client.servers:
+        for server in client.guilds:
             logger.info("Logged into server %s %s", server, server.id)
-            if server.default_channel is not None:
+            if (
+                hasattr(server, 'default_channel')
+                and server.default_channel is not None
+            ):
                 logger.info("Default channel is %s", server.default_channel)
             for channel in server.channels:
-                if channel.type == discord.ChannelType.text:
+                if isinstance(channel, discord.TextChannel):
                     logger.info('\tChannel: %s %s', channel.name, channel.id)
 
-            if opts.greet and server.default_channel is not None:
+            if (
+                opts.greet and hasattr(server, 'default_channel')
+                and server.default_channel is not None
+            ):
                 await client.send_message(server.default_channel, version())
 
             emotes.add_server(server, config['storage_dir'])
@@ -497,7 +503,7 @@ async def on_ready():
                 name = playing['name']
                 url = playing['url'] if 'url' in playing else None
                 game = discord.Game(name=name, url=url)
-                await client.change_presence(game=game)
+                await client.change_presence(activity=game)
                 logger.info('Set current game to %s', str(game))
         # TODO: Support other presence options (status, AFK)
 
@@ -516,7 +522,7 @@ async def on_message(message):
             return
         logger.info(
             '[%s] Handling command message "%s"',
-            message.server,
+            message.guild,
             message.content
         )
 
@@ -527,7 +533,7 @@ async def on_message(message):
         if command is None:
             logger.warning(
                 '[%s] Mishandled command message "%s"',
-                message.server,
+                message.guild,
                 message.content
             )
 
@@ -550,7 +556,7 @@ async def on_message(message):
     elif message.clean_content.startswith(constants.EMOTE_PREFIX):
         logger.info(
             '[%s] Handling emote message "%s"',
-            message.server,
+            message.guild,
             message.clean_content
         )
         await emotes.display_emote(client, message)
