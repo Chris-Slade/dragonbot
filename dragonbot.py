@@ -179,7 +179,7 @@ def init():
     keywords = Keywords()
 
     # Set up command dispatcher
-    owner_only = { config['owner_id'] } # For registering commands as owner-only
+    owner_only = { int(config['owner_id']) } # For registering commands as owner-only
     cd = CommandDispatcher(read_only=opts.read_only)
     cd.register("help", show_help)
     cd.register("insult", insult)
