@@ -518,6 +518,7 @@ async def on_message(message):
             await message.channel.send(str(e))
             logger.info(
                 '[%s] Exception executing command "%s": %s',
+                message.guild,
                 command,
                 str(e)
             )
