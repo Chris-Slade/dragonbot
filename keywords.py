@@ -105,6 +105,8 @@ Keywords:
             )
 
         server_keywords = self.keywords[message.guild.id]
+        if not server_keywords:
+            return
         content = message.clean_content.casefold()
         seen = set()
         for index, keyword in self.automata[message.guild.id].iter(content):
