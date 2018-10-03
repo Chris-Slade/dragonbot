@@ -403,14 +403,14 @@ async def purge(client, message):
         return
 
     delete_me = []
-    async for message in client.logs_from(message.channel, limit=1000):
+    async for message in message.channel.history(limit=1000):
         if message.author.mention == user:
             delete_me.append(message)
         if len(delete_me) >= count:
             break
     if delete_me:
         try:
-            await client.delete_messages(delete_me)
+            await message.channel.delete_messages(delete_me)
             await message.channel.send(
                 'Deleted {} messages'.format(len(delete_me))
             )
