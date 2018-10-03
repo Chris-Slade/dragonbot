@@ -367,18 +367,16 @@ async def set_current_game(client, message):
     try:
         game, url = args.rsplit(maxsplit=1)
     except ValueError:
-        await message.channel.send('Need a game and its URL.')
+        await message.channel.send('Need an activity and its URL.')
         return
     if url == "None":
         url = None
-    game = discord.Game(
-        name=game,
-        url=url
-    )
+    game = discord.Game(name=game, url=url)
     try:
-        await client.change_presence(game=game)
+        await client.change_presence(activity=game)
+        await message.channel.send('Changed presence.')
     except InvalidArgument:
-        await message.channel.send('Error changing presence')
+        await message.channel.send('Error changing presence.')
 
 @command
 async def purge(client, message):
