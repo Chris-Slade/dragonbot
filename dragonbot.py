@@ -284,7 +284,7 @@ Commands:
 async def truth(client, message):
     """Say the truth."""
     assert None not in (client, message), 'Got None, expected value'
-    await message.channel.send('slushrfggts')
+    await message.channel.send(embed=discord.Embed(title='slushrfggts'))
 
 @command
 async def version_command(client, message):
