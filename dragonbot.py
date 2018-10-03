@@ -336,6 +336,7 @@ async def say(client, message):
         return
     try:
         channel_id, user_message = argstr.split(maxsplit=1)
+        channel_id = int(channel_id)
     except ValueError:
         await message.channel.send('Need channel ID and message to send.')
         return
