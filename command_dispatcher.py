@@ -95,11 +95,10 @@ class CommandDispatcher(object):
         if command.may_use is not None:
             if message.author.id not in command.may_use:
                 raise CommandDispatcher.PermissionDenied(
-                    '[{}] User "{}#{}" does not have permission'
+                    '[{}] User "{}" does not have permission'
                     ' to use command "{}"'.format(
                         message.guild,
-                        message.author.name,
-                        message.author.id,
+                        message.author,
                         command_name
                     )
                 )
