@@ -30,6 +30,7 @@ def getopts():
     """Handle bot arguments."""
     defaults = {
         'config'     : constants.DEFAULT_CONFIG,
+        'env-config' : None,
         'global-log' : constants.DEFAULT_LOG_LEVEL,
         'greet'      : True,
         'log'        : constants.DEFAULT_BOT_LOG_LEVEL,
@@ -42,6 +43,13 @@ def getopts():
         type=str,
         help='Specify the configuration file to use. Defaults to '
             + defaults['config'] + '.'
+    )
+    parser.add_argument(
+        '-e', '--env-config',
+        type=str,
+        help='Load the configuration as JSON from the given environment'
+             ' variable, rather than using a configuration file.'
+             ' This option overrides --config.'
     )
     parser.add_argument(
         '--global-log',
@@ -89,6 +97,7 @@ def getopts():
     opts.log = util.get_log_level(getattr(opts, 'log'))
     if getattr(opts, 'log') is None:
         opts.log = util.get_log_level(defaults['log'])
+    opts.env_config = getattr(opts, 'env-config')
 
     return opts
 
@@ -147,9 +156,19 @@ def init():
     signal.signal(signal.SIGUSR1, restart)
 
     # Initialize config
-    logger.info('Loading config')
-    with open(opts.config, 'r', encoding='utf-8') as fh:
-        config = json.load(fh)
+    if opts.env_config and opts.env_config in os.environ:
+        logger.info('Loading config from environment')
+        config = json.loads(os.environ[opts.env_config])
+    else:
+        if opts.env_config:
+            logger.info(
+                'Environment config variable %s not present.'
+                ' Falling back on config file',
+                opts.env_config
+            )
+        logger.info('Loading config from %s', opts.config)
+        with open(opts.config, 'r', encoding='utf-8') as fh:
+            config = json.load(fh)
 
     # Initialize storage directory if needed
     if 'storage_dir' not in config:

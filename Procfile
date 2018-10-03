@@ -1,1 +1,1 @@
-web: python -O dragonbot.py --no-greet -c config.json
+web: python -O dragonbot.py -e DRAGONBOT_CONFIG --no-greet
