@@ -32,7 +32,7 @@ class Emotes(object):
             pass
         self.emotes[server.id] = Storage(os.path.join(server_dir, 'emotes.json'))
         self.logger.info(
-            '[%s] Loaded %d emotes from disk',
+            '[%s] Loaded %d emote(s) from disk',
             server,
             len(self.emotes[server.id])
         )

@@ -32,7 +32,7 @@ class Keywords(object):
             pass
         self.keywords[server.id] = Storage(os.path.join(server_dir, 'keywords.json'))
         self.logger.info(
-            '[%s] Loaded %d keywords from disk',
+            '[%s] Loaded %d keyword(s) from disk',
             server,
             len(self.keywords[server.id])
         )
