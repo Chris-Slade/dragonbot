@@ -97,8 +97,7 @@ Emotes:
                 raise ValueError('Malformed parameters to !addemote')
         except Exception as e:
             self.logger.info('Failed to parse !addcommand', exc_info=e)
-            await client.send_message(
-                message.channel,
+            await message.channel.send(
                 'Give me a name and a URL, {}.'.format(random_insult())
             )
             return
@@ -111,13 +110,9 @@ Emotes:
                 emote,
                 message.author.name
             )
-            await client.send_message(
-                message.channel,
-                'Added emote!'
-            )
+            await message.channel.send('Added emote!')
         except KeyExistsError:
-            await client.send_message(
-                message.channel,
+            await message.channel.send(
                 'That emote already exists, {}.'.format(random_insult())
             )
     # End of add_emote
@@ -126,8 +121,7 @@ Emotes:
     async def remove_emote(self, client, message):
         command, argstr = util.split_command(message)
         if argstr is None:
-            await client.send_message(
-                message.channel,
+            await message.channel.send(
                 "I can't delete nothing, {}.".format(random_insult())
             )
             return
@@ -142,10 +136,9 @@ Emotes:
                 emote,
                 message.author.name
             )
-            await client.send_message(message.channel, 'Deleted emote!')
+            await message.channel.send('Deleted emote!')
         except KeyError:
-            await client.send_message(
-                message.channel,
+            await message.channel.send(
                 "That emote isn't stored, {}.".format(random_insult())
             )
     # End of remove_emote
@@ -154,20 +147,19 @@ Emotes:
     async def refresh_emotes(self, client, message):
         # FIXME
         self.emotes.load(self.emotes_file)
-        await client.send_message(message.channel, 'Emotes refreshed!')
+        await message.channel.send('Emotes refreshed!')
 
     @server_command_method
     async def list_emotes(self, client, message):
         if len(self.emotes) == 0:
-            await client.send_message(
-                message.channel,
+            await message.channel.send(
                 "I don't have any emotes for this server yet!"
             )
         for chunk in util.chunker(
             self.emotes[message.guild.id].as_text_list(),
             constants.MAX_CHARACTERS
         ):
-            await client.send_message(message.channel, chunk)
+            await message.channel.send(chunk)
 
     @server_command_method
     async def display_emote(self, client, message):
@@ -175,7 +167,7 @@ Emotes:
         server_emotes = self.emotes[message.guild.id]
         if emote in server_emotes:
             self.logger.debug('Posting emote "%s"', server_emotes[emote])
-            await client.send_message(message.channel, server_emotes[emote])
+            await message.channel.send(server_emotes[emote])
         else:
             self.logger.debug('Unknown emote')
             if constants.IDK_REACTION is not None:

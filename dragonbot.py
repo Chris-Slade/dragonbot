@@ -284,30 +284,30 @@ Commands:
 async def truth(client, message):
     """Say the truth."""
     assert None not in (client, message), 'Got None, expected value'
-    await client.send_message(message.channel, 'slushrfggts')
+    await message.channel.send('slushrfggts')
 
 @command
 async def version_command(client, message):
     """Say the bot's version."""
-    await client.send_message(message.channel, version())
+    await message.channel.send(version())
 
 @command
 async def show_help(client, message):
     """Show help."""
     command, argstr = util.split_command(message)
     if argstr is None:
-        await client.send_message(message.channel, help())
+        await message.channel.send(help())
     elif argstr.casefold() == 'emotes':
-        await client.send_message(message.channel, Emotes.help())
+        await message.channel.send(Emotes.help())
     elif argstr.casefold() == 'keywords':
-        await client.send_message(message.channel, Keywords.help())
+        await message.channel.send(Keywords.help())
     else:
-        await client.send_message(message.channel, "I don't have help for that.")
+        await message.channel.send("I don't have help for that.")
 
 @command
 async def test(client, message):
     test_message = 'a' * 2500
-    await client.send_message(message.channel, test_message)
+    await message.channel.send(test_message)
 
 @command
 async def show_stats(client, message):
@@ -325,28 +325,25 @@ async def show_stats(client, message):
         sb.append(stat_fmt.format(stat.title(), stats[stat]))
     sb.append("```")
     stat_message = "\n".join(sb)
-    await client.send_message(message.channel, stat_message)
+    await message.channel.send(stat_message)
 
 @command
 async def say(client, message):
     """Say something specified by the !say command."""
     command, argstr = split_command(message)
     if command is None or argstr is None:
-        await client.send_message(message.channel, 'Nothing to say!')
+        await message.channel.send('Nothing to say!')
         return
     try:
         channel_id, user_message = argstr.split(maxsplit=1)
     except ValueError:
-        await client.send_message(
-            message.channel,
-            'Need channel ID and message to send!'
-        )
+        await message.channel.send('Need channel ID and message to send!')
         return
     channel = client.get_channel(channel_id)
     if channel is not None:
-        await client.send_message(channel, user_message)
+        await channel.send(user_message)
     else:
-        await client.send_message(message.channel, "Couldn't find channel.")
+        await message.channel.send("Couldn't find channel.")
 
 @command
 async def insult(client, message):
@@ -356,20 +353,11 @@ async def insult(client, message):
         insult = get_insult(rate_limit=1.5)
         if not (insult.startswith("I ") or insult.startswith("I'm ")):
             insult = insult[0].lower() + insult[1:]
-        await client.send_message(
-            message.channel,
-            "{}, {}".format(name, insult)
-        )
+        await message.channel.send("{}, {}".format(name, insult))
     except insult_module.RateLimited:
-        await client.send_message(
-            message.channel,
-            'Requests are being sent too quickly.'
-        )
+        await message.channel.send('Requests are being sent too quickly.')
     except URLError as e:
-        await client.send_message(
-            message.channel,
-            'Error retrieving insult from server.'
-        )
+        await message.channel.send('Error retrieving insult from server.')
         logger.warning('Error retrieving insult from server: %s', str(e))
 
 @command
@@ -379,10 +367,7 @@ async def set_current_game(client, message):
     try:
         game, url = args.rsplit(maxsplit=1)
     except ValueError:
-        await client.send_message(
-            message.channel,
-            'Need a game and its URL.'
-        )
+        await message.channel.send('Need a game and its URL.')
         return
     if url == "None":
         url = None
@@ -393,7 +378,7 @@ async def set_current_game(client, message):
     try:
         await client.change_presence(game=game)
     except InvalidArgument:
-        await client.send_message('Error changing presence')
+        await message.channel.send('Error changing presence')
 
 @command
 async def purge(client, message):
@@ -402,25 +387,19 @@ async def purge(client, message):
     try:
         user, count = args.split(maxsplit=1)
     except ValueError:
-        await client.send_message(message.channel, 'Need a name and a count')
+        await message.channel.send('Need a name and a count')
         return
     try:
         count = int(count)
     except ValueError:
-        await client.send_message(message.channel, 'Count must be an integer')
+        await message.channel.send('Count must be an integer')
         return
 
     if count > 100:
-        await client.send_message(
-            message.channel,
-            "Can't delete more than 100 messages"
-        )
+        await message.channel.send("Can't delete more than 100 messages")
         return
     if count < 2:
-        await client.send_message(
-            message.channel,
-            "Can't delete fewer than 2 messages"
-        )
+        await message.channel.send("Can't delete fewer than 2 messages")
         return
 
     delete_me = []
@@ -432,26 +411,20 @@ async def purge(client, message):
     if delete_me:
         try:
             await client.delete_messages(delete_me)
-            await client.send_message(
-                message.channel,
+            await message.channel.send(
                 'Deleted {} messages'.format(len(delete_me))
             )
         except discord.Forbidden:
-            await client.send_message(
-                message.channel,
-                "I'm not allowed to do that"
-            )
+            await message.channel.send("I'm not allowed to do that")
         except discord.HTTPException as e:
-            await client.send_message(
-                message.channel,
+            await message.channel.send(
                 'An error occurred' + (': ' + e.text if e.text else "")
             )
             logger.exception('Error deleting messages')
         except Exception:
             logger.exception('Error deleting messages')
     else:
-        await client.send_message(
-            message.channel,
+        await message.channel.send(
             "I don't see any messages from that user in the recent history"
         )
 
@@ -482,7 +455,7 @@ async def on_ready():
                 opts.greet and hasattr(server, 'default_channel')
                 and server.default_channel is not None
             ):
-                await client.send_message(server.default_channel, version())
+                await server.default_channel.send(version())
 
             emotes.add_server(server, config['storage_dir'])
             keywords.add_server(server, config['storage_dir'])
@@ -542,7 +515,7 @@ async def on_message(message):
             CommandDispatcher.WriteDenied,
             CommandDispatcher.UnknownCommand
         ) as e:
-            await client.send_message(message.channel, str(e))
+            await message.channel.send(str(e))
             logger.info(
                 '[%s] Exception executing command "%s": %s',
                 command,

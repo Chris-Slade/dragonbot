@@ -115,10 +115,7 @@ Keywords:
             count = server_keywords[keyword]['count']
             self.logger.info('Incremented count of "%s" to %d', keyword, count)
             if util.is_get(count):
-                await client.send_message(
-                    message.channel,
-                    '{} #{}'.format(keyword, count)
-                )
+                await message.channel.send('{} #{}'.format(keyword, count))
                 server_keywords.save()
 
             # Show reactions
@@ -152,7 +149,7 @@ Keywords:
             # If we just have a name, add it as a keyword with no reaction.
             server_keywords[argstr] = { 'reactions' : [], 'count' : 0 }
             self.update_automaton(message.guild)
-            await client.send_message(message.channel, 'Keyword added!')
+            await message.channel.send('Keyword added!')
             self.logger.info(
                 '%s added keyword "%s"',
                 message.author.name,
@@ -172,10 +169,7 @@ Keywords:
             server_keywords[name] = { 'reactions' : [emote], 'count' : 0 }
         server_keywords.save()
         self.update_automaton(message.guild)
-        await client.send_message(
-            message.channel,
-            'Added keyword reaction!'
-        )
+        await message.channel.send('Added keyword reaction!')
         self.logger.info(
             '%s added keyword "%s" -> "%s"',
             message.author.name,
@@ -191,46 +185,36 @@ Keywords:
             del server_keywords[name]
             server_keywords.save()
             self.update_automaton(message.guild)
-            await client.send_message(
-                message.channel,
-                'Removed keyword!'
-            )
+            await message.channel.send('Removed keyword!')
             self.logger.info(
                 '%s removed keyword "%s"',
                 message.author.name,
                 name
             )
         except KeyError:
-            await client.send_message(
-                message.channel,
-                "That keyword doesn't exist!"
-            )
+            await message.channel.send("That keyword doesn't exist!")
 
     @server_command_method
     async def refresh_keywords(self, client, message):
         self.keywords.load(self.keywords_file)
-        await client.send_message(message.channel, 'Keywords refreshed!')
+        await message.channel.send('Keywords refreshed!')
 
     @server_command_method
     async def list_keywords(self, client, message):
         server_keywords = self.keywords[message.guild.id]
         if len(server_keywords) == 0:
-            await client.send_message(
-                message.channel,
+            await message.channel.send(
                 "I don't have any keywords for this server yet!"
             )
         for chunk in util.chunker(server_keywords.as_text_list(), 2000):
-            await client.send_message(message.channel, chunk)
+            await message.channel.send(chunk)
 
     @server_command_method
     async def show_count(self, client, message):
         server_keywords = self.keywords[message.guild.id]
         command, keyword = util.split_command(message)
         if keyword in server_keywords:
-            await client.send_message(
-                message.channel,
-                server_keywords[keyword]['count']
-            )
+            await message.channel.send(server_keywords[keyword]['count'])
         else:
             if constants.IDK_REACTION is not None:
-                await client.send_message(message.channel, constants.IDK_REACTION)
+                await message.channel.send(constants.IDK_REACTION)
