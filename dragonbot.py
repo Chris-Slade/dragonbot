@@ -332,12 +332,12 @@ async def say(client, message):
     """Say something specified by the !say command."""
     command, argstr = split_command(message)
     if command is None or argstr is None:
-        await message.channel.send('Nothing to say!')
+        await message.channel.send('Nothing to say.')
         return
     try:
         channel_id, user_message = argstr.split(maxsplit=1)
     except ValueError:
-        await message.channel.send('Need channel ID and message to send!')
+        await message.channel.send('Need channel ID and message to send.')
         return
     channel = client.get_channel(channel_id)
     if channel is not None:
@@ -387,19 +387,19 @@ async def purge(client, message):
     try:
         user, count = args.split(maxsplit=1)
     except ValueError:
-        await message.channel.send('Need a name and a count')
+        await message.channel.send('Need a name and a count.')
         return
     try:
         count = int(count)
     except ValueError:
-        await message.channel.send('Count must be an integer')
+        await message.channel.send('Count must be an integer.')
         return
 
     if count > 100:
-        await message.channel.send("Can't delete more than 100 messages")
+        await message.channel.send("Can't delete more than 100 messages.")
         return
     if count < 2:
-        await message.channel.send("Can't delete fewer than 2 messages")
+        await message.channel.send("Can't delete fewer than 2 messages.")
         return
 
     delete_me = []
@@ -415,17 +415,17 @@ async def purge(client, message):
                 'Deleted {} messages'.format(len(delete_me))
             )
         except discord.Forbidden:
-            await message.channel.send("I'm not allowed to do that")
+            await message.channel.send("I'm not allowed to do that.")
         except discord.HTTPException as e:
             await message.channel.send(
-                'An error occurred' + (': ' + e.text if e.text else "")
+                'An error occurred' + (': ' + e.text if e.text else "") + '.'
             )
             logger.exception('Error deleting messages')
         except Exception:
             logger.exception('Error deleting messages')
     else:
         await message.channel.send(
-            "I don't see any messages from that user in the recent history"
+            "I don't see any messages from that user in the recent history."
         )
 
 ### EVENT HANDLERS ###
