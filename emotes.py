@@ -1,9 +1,9 @@
 import discord
 import logging
+import os
 import re
 
 from insult import random_insult
-import os
 from storage import Storage, KeyExistsError
 from util import command_method, server_command_method
 import constants

@@ -4,6 +4,7 @@ import logging
 import os
 import re
 
+from insult import random_insult
 from storage import Storage
 from util import command_method, server_command_method
 import constants
@@ -148,6 +149,11 @@ Keywords:
     async def add_keyword(self, client, message):
         server_keywords = self.keywords[message.guild.id]
         command, argstr = util.split_command(message)
+        if argstr is None:
+            await message.channel.send(
+                "I can't add nothing, {}.".format(random_insult())
+            )
+            return
         try:
             name, emote = argstr.split(maxsplit=1)
         except:
@@ -182,6 +188,11 @@ Keywords:
     async def remove_keyword(self, client, message):
         server_keywords = self.keywords[message.guild.id]
         command, name = util.split_command(message)
+        if name is None:
+            await message.channel.send(
+                "I can't delete nothing, {}.".format(random_insult())
+            )
+            return
         try:
             del server_keywords[name]
             server_keywords.save()
