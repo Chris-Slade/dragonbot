@@ -167,7 +167,7 @@ def init():
 
     # Initialize storage directory if needed
     if 'storage_dir' not in config:
-        logger.warn('No storage directory specified, defaulting to ./storage/')
+        logger.warning('No storage directory specified, defaulting to ./storage/')
         config['storage_dir'] = './storage/'
     logger.info('Creating storage directory %s', config['storage_dir'])
     os.makedirs(config['storage_dir'], exist_ok=True)
