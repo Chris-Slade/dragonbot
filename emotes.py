@@ -152,7 +152,7 @@ Emotes:
 
     @server_command_method
     async def list_emotes(self, client, message):
-        if len(self.emotes) == 0:
+        if len(self.emotes[message.guild.id]) == 0:
             await message.channel.send(
                 "I don't have any emotes for this server yet!"
             )
