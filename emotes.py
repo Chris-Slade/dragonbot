@@ -30,7 +30,7 @@ class Emotes(object):
             os.mkdir(server_dir)
         except FileExistsError:
             pass
-        self.emotes[int(server.id)] = Storage(os.path.join(server_dir, 'emotes.json'))
+        self.emotes[server.id] = Storage(os.path.join(server_dir, 'emotes.json'))
         self.logger.info(
             '[%s] Loaded %d emotes from disk',
             server,

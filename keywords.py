@@ -30,7 +30,7 @@ class Keywords(object):
             os.mkdir(server_dir)
         except FileExistsError:
             pass
-        self.keywords[int(server.id)] = Storage(os.path.join(server_dir, 'keywords.json'))
+        self.keywords[server.id] = Storage(os.path.join(server_dir, 'keywords.json'))
         self.logger.info(
             '[%s] Loaded %d keywords from disk',
             server,
