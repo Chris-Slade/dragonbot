@@ -487,9 +487,10 @@ async def on_message(message):
             logger.info('Ignoring null command')
             return
         logger.info(
-            '[%s] Handling command message "%s"',
+            '[%s] Handling command message "%s" from user %s',
             message.guild,
-            message.content
+            message.content,
+            message.author
         )
 
         stats['commands seen'] += 1
@@ -498,9 +499,10 @@ async def on_message(message):
 
         if command is None:
             logger.warning(
-                '[%s] Mishandled command message "%s"',
+                '[%s] Mishandled command message "%s" from %s',
                 message.guild,
-                message.content
+                message.content,
+                message.author
             )
 
         assert command_dispatcher is not None
@@ -515,16 +517,18 @@ async def on_message(message):
         ) as e:
             await message.channel.send(str(e))
             logger.info(
-                '[%s] Exception executing command "%s": %s',
+                '[%s] Exception executing command "%s" from %s: %s',
                 message.guild,
                 command,
+                message.author,
                 str(e)
             )
     elif message.clean_content.startswith(constants.EMOTE_PREFIX):
         logger.info(
-            '[%s] Handling emote message "%s"',
+            '[%s] Handling emote message "%s" from %s',
             message.guild,
-            message.clean_content
+            message.clean_content,
+            message.author
         )
         await emotes.display_emote(client, message)
         stats['emotes seen'] += 1

@@ -106,9 +106,10 @@ Emotes:
             self.emotes[message.guild.id][emote] = body
             self.emotes[message.guild.id].save()
             self.logger.info(
-                'Emote "%s" added by "%s"',
-                emote,
-                message.author.name
+                '[%s] %s added emote "%s"',
+                message.guild,
+                message.author,
+                emote
             )
             await message.channel.send('Added emote!')
         except KeyExistsError:
@@ -131,10 +132,10 @@ Emotes:
             del self.emotes[message.guild.id][emote]
             self.emotes[message.guild.id].save()
             self.logger.info(
-                '[%s] Emote "%s" deleted by "%s"',
+                '[%s] %s deleted emote "%s"',
                 message.guild,
-                emote,
-                message.author.name
+                message.author,
+                emote
             )
             await message.channel.send('Deleted emote!')
         except KeyError:

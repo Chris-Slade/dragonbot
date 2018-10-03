@@ -113,7 +113,12 @@ Keywords:
             seen.add(keyword)
             server_keywords[keyword]['count'] += 1
             count = server_keywords[keyword]['count']
-            self.logger.info('Incremented count of "%s" to %d', keyword, count)
+            self.logger.info(
+                '%s incremented count of "%s" to %d',
+                message.author,
+                keyword,
+                count
+            )
             if util.is_get(count):
                 await message.channel.send('{} #{}'.format(keyword, count))
                 server_keywords.save()
@@ -150,11 +155,7 @@ Keywords:
             server_keywords[argstr] = { 'reactions' : [], 'count' : 0 }
             self.update_automaton(message.guild)
             await message.channel.send('Keyword added!')
-            self.logger.info(
-                '%s added keyword "%s"',
-                message.author.name,
-                argstr
-            )
+            self.logger.info('%s added keyword "%s"', message.author, argstr)
             return
 
         # Try to extract a custom emoji's name and ID
@@ -172,7 +173,7 @@ Keywords:
         await message.channel.send('Added keyword reaction!')
         self.logger.info(
             '%s added keyword "%s" -> "%s"',
-            message.author.name,
+            message.author,
             name,
             emote
         )
@@ -186,11 +187,7 @@ Keywords:
             server_keywords.save()
             self.update_automaton(message.guild)
             await message.channel.send('Removed keyword!')
-            self.logger.info(
-                '%s removed keyword "%s"',
-                message.author.name,
-                name
-            )
+            self.logger.info('%s removed keyword "%s"', message.author, name)
         except KeyError:
             await message.channel.send("That keyword doesn't exist!")
 
