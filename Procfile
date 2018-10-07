@@ -1,1 +1,1 @@
-worker: python -O dragonbot.py
+worker: python -O src/dragonbot.py
