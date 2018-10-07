@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import atexit
+import codecs
 import collections
 import datetime
 import discord
@@ -32,6 +33,7 @@ def getopts():
     env_opts = {
         'global_log'   : 'DRAGONBOT_LOG_LEVEL',
         'greet'        : 'DRAGONBOT_GREET',
+        'insults'      : 'DRAGONBOT_INSULTS',
         'insults_file' : 'DRAGONBOT_INSULTS_FILE',
         'log'          : 'DRAGONBOT_MAIN_LOG_LEVEL',
         'owner_id'     : 'DRAGONBOT_OWNER_ID',
@@ -43,7 +45,8 @@ def getopts():
     defaults = {
         'global_log'   : os.getenv(env_opts['global_log'], default='WARNING'),
         'greet'        : os.environ.get(env_opts['greet']) == 'True',
-        'insults_file' : os.getenv(env_opts['insults_file'], default='insults.json'),
+        'insults'      : os.environ.get(env_opts['insults']),
+        'insults_file' : os.environ.get(env_opts['insults_file']),
         'log'          : os.getenv(env_opts['log'], default='INFO'),
         'owner_id'     : os.environ.get(env_opts['owner_id']),
         'presence'     : os.environ.get(env_opts['presence']),
@@ -76,11 +79,25 @@ def getopts():
             ' Environment variable: ' + env_opts['greet']
     )
     parser.add_argument(
+        '--insults',
+        type=str,
+        help='Random insults to select from when insulting users.'
+            ' This option should be set to a JSON object with two fields:'
+            ' "encoding", which optionally specifies the encoding of the'
+            ' insults (a parameter to `codecs.decode`), and "insults," which'
+            ' is an array containing the insults.'
+            ' The "encoding" field is to allow obfuscation of the insults,'
+            ' e.g. with `rot_13`. The strings themselves must be encoded as'
+            ' UTF-8 text, in accordance with RFC 7159.'
+            ' If that is not present, only a single default insult will be used.'
+            ' See also the --insults-file option.'
+            ' Environment variable: ' + env_opts['insults']
+    )
+    parser.add_argument(
         '--insults-file',
         type=str,
-        help='The file of random insults to use. See the docstring for the'
-            ' random_insults function in insults.py for the proper format.'
-            ' Environment variable: ' + env_opts['insults_file']
+        help='Like the --insults option, but takes a filename from which to'
+            ' read the insults.'
     )
     parser.add_argument(
         '-l', '--log',
@@ -122,20 +139,26 @@ def getopts():
     )
     opts = parser.parse_args()
 
-    if opts.presence is not None:
-        try:
-            opts.presence = json.loads(opts.presence)
-        except json.JSONDecodeError as e:
-            print('Presence argument is not valid JSON: ' + e.msg + '\n')
-            parser.print_help()
-            sys.exit(1)
-
     # Since we allow env-var fallbacks, we can't use argparse's built-in
     # "required" functionality.
     for required_arg in ['token', 'owner_id']:
         if required_arg not in opts or getattr(opts, required_arg) is None:
             print(f'Error: Argument "{required_arg}" is required.', file=sys.stderr)
             sys.exit(1)
+
+    # Parse --presence option
+    if opts.presence is not None:
+        opts.presence = _parse_json_opt(opts, 'presence')
+
+    # Load insults
+    if opts.insults and opts.insults_file:
+        print('You cannot give both --insults and --insults-file.')
+        sys.exit(1)
+    elif opts.insults:
+        opts.insults = _get_insults(_parse_json_opt(opts, 'insults'))
+    elif opts.insults_file:
+        with open(opts.insults_file, 'r', encoding='utf-8') as fh:
+            opts.insults = _get_insults(json.load(fh))
 
     opts.global_log = util.get_log_level(opts.global_log)
     opts.log = util.get_log_level(opts.log)
@@ -146,6 +169,23 @@ def getopts():
 
     config.initialized = True
     return config
+
+def _parse_json_opt(opts, arg):
+    try:
+        return json.loads(getattr(opts, arg))
+    except json.JSONDecodeError as e:
+        print(f'{arg} option is not valid JSON: ' + e.msg + '\n')
+        sys.exit(1)
+
+def _get_insults(insults):
+    if 'insults' not in insults:
+        raise ValueError('Malformed insults object, expected "insults" field')
+    if 'encoding' in insults:
+        insults['insults'] = [
+            codecs.decode(insult, insults['encoding'])
+                for insult in insults['insults']
+        ]
+    return insults['insults']
 
 ### INITIALIZATION ###
 

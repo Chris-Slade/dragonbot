@@ -8,9 +8,8 @@ IDK_REACTION = None # '❔'
 COMMAND_PREFIX = '!'
 # Prefix for emote messages
 EMOTE_PREFIX = '@'
-
-# TODO Make this configurable
-INSULTS_ENV_VAR = 'DRAGONBOT_INSULTS'
+# Default insult for when no insults file is provided
+DEFAULT_INSULT = 'you dummy'
 
 LOG_LEVELS = [ 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL' ]
 
