@@ -10,7 +10,7 @@ from util import command_method, server_command_method
 import constants
 import util
 
-class Keywords(object):
+class Keywords():
     """A keywords module for DragonBot."""
 
     def __init__(self): # , keywords_file):
@@ -91,7 +91,7 @@ Keywords:
         return sum([ len(self.keywords[server]) for server in self.keywords ])
 
     @command_method
-    async def handle_keywords(self, client, message):
+    async def handle_keywords(self, _client, message):
         """Processes a message, checking it for keywords and performing
         actions when they are found.
         """
@@ -109,7 +109,7 @@ Keywords:
             return
         content = message.clean_content.casefold()
         seen = set()
-        for index, keyword in self.automata[message.guild.id].iter(content):
+        for _index, keyword in self.automata[message.guild.id].iter(content):
             # Count keyword
             if keyword in seen:
                 continue
@@ -140,7 +140,7 @@ Keywords:
                 except discord.errors.Forbidden:
                     self.logger.info('Reached max number of reactions')
                     return
-                except discord.HTTPException as e:
+                except discord.HTTPException:
                     self.logger.exception(
                         'Error reacting to keyword "%s" with "%s"',
                         keyword,
@@ -148,9 +148,9 @@ Keywords:
                     )
 
     @server_command_method
-    async def add_keyword(self, client, message):
+    async def add_keyword(self, _client, message):
         server_keywords = self.keywords[message.guild.id]
-        command, argstr = util.split_command(message)
+        _command, argstr = util.split_command(message)
         if argstr is None:
             await message.channel.send(
                 "I can't add nothing, {}.".format(random_insult())
@@ -187,9 +187,9 @@ Keywords:
         )
 
     @server_command_method
-    async def remove_keyword(self, client, message):
+    async def remove_keyword(self, _client, message):
         server_keywords = self.keywords[message.guild.id]
-        command, name = util.split_command(message)
+        _command, name = util.split_command(message)
         if name is None:
             await message.channel.send(
                 "I can't delete nothing, {}.".format(random_insult())
@@ -205,14 +205,16 @@ Keywords:
             await message.channel.send("That keyword doesn't exist!")
 
     @server_command_method
-    async def refresh_keywords(self, client, message):
-        self.keywords.load(self.keywords_file)
-        await message.channel.send('Keywords refreshed!')
+    async def refresh_keywords(self, _client, message):
+        # FIXME
+        await message.channel.send('Command disabled.')
+        # self.keywords.load(self.keywords_file)
+        # await message.channel.send('Keywords refreshed!')
 
     @server_command_method
-    async def list_keywords(self, client, message):
+    async def list_keywords(self, _client, message):
         server_keywords = self.keywords[message.guild.id]
-        if len(server_keywords) == 0:
+        if not server_keywords:
             await message.channel.send(
                 "I don't have any keywords for this server yet!"
             )
@@ -220,9 +222,9 @@ Keywords:
             await message.channel.send(chunk)
 
     @server_command_method
-    async def show_count(self, client, message):
+    async def show_count(self, _client, message):
         server_keywords = self.keywords[message.guild.id]
-        command, keyword = util.split_command(message)
+        _command, keyword = util.split_command(message)
         if keyword in server_keywords:
             await message.channel.send(server_keywords[keyword]['count'])
         else:

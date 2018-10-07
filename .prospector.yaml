@@ -1,0 +1,5 @@
+pep8:
+  disable:
+    - E131
+    - E305
+# vim: ts=2

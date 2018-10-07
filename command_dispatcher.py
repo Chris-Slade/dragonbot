@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-class CommandDispatcher(object):
+class CommandDispatcher():
     """Dispatches bot commands, which can be registered by other
     modules. Handles permissions.
     """

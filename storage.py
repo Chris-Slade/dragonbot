@@ -3,8 +3,6 @@ import json
 import logging
 import os
 
-import util
-
 class KeyExistsError(Exception):
     pass
 
@@ -39,11 +37,11 @@ class Storage(dict):
     def save(self):
         self.logger.info('Saving entries')
         if (
-            len(self) == 0
+            not self.__len__()
             and os.path.isfile(self.file)
             and os.path.getsize(self.file) <= 2
         ):
-            self.logger.warn(
+            self.logger.warning(
                 'Refusing to overwrite file "%s" with empty Storage',
                 self.file
             )
@@ -75,9 +73,6 @@ class Storage(dict):
     def __contains__(self, key):
         key = _normalize_key(key)
         return super().__contains__(key)
-
-    def __len__(self):
-        return super().__len__()
 
     def as_text_list(self):
         return ", ".join(sorted(self))

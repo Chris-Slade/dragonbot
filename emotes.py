@@ -1,15 +1,14 @@
-import discord
 import logging
 import os
 import re
 
 from insult import random_insult
 from storage import Storage, KeyExistsError
-from util import command_method, server_command_method
+from util import server_command_method
 import constants
 import util
 
-class Emotes(object):
+class Emotes():
     """Emotes module for DragonBot."""
 
     def __init__(self):
@@ -79,8 +78,8 @@ Emotes:
         return sum([ len(self.emotes[server]) for server in self.emotes ])
 
     @server_command_method
-    async def add_emote(self, client, message):
-        command, argstr = util.split_command(message)
+    async def add_emote(self, _client, message):
+        _command, argstr = util.split_command(message)
         try:
             if argstr is None:
                 raise ValueError('No arguments')
@@ -119,8 +118,8 @@ Emotes:
     # End of add_emote
 
     @server_command_method
-    async def remove_emote(self, client, message):
-        command, argstr = util.split_command(message)
+    async def remove_emote(self, _client, message):
+        _command, argstr = util.split_command(message)
         if argstr is None:
             await message.channel.send(
                 "I can't delete nothing, {}.".format(random_insult())
@@ -145,14 +144,15 @@ Emotes:
     # End of remove_emote
 
     @server_command_method
-    async def refresh_emotes(self, client, message):
+    async def refresh_emotes(self, _client, message):
         # FIXME
-        self.emotes.load(self.emotes_file)
-        await message.channel.send('Emotes refreshed!')
+        await message.channel.send('Command disabled.')
+        # self.emotes.load(self.emotes_file)
+        # await message.channel.send('Emotes refreshed!')
 
     @server_command_method
-    async def list_emotes(self, client, message):
-        if len(self.emotes[message.guild.id]) == 0:
+    async def list_emotes(self, _client, message):
+        if not self.emotes[message.guild.id]:
             await message.channel.send(
                 "I don't have any emotes for this server yet!"
             )
@@ -163,7 +163,7 @@ Emotes:
             await message.channel.send(chunk)
 
     @server_command_method
-    async def display_emote(self, client, message):
+    async def display_emote(self, _client, message):
         emote = message.clean_content[1:]
         server_emotes = self.emotes[message.guild.id]
         if emote in server_emotes:

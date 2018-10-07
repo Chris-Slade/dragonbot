@@ -47,6 +47,7 @@ def is_get(number):
     count = str(number)
     if len(count) >= 2 and count[-1] == count[-2]:
         return True
+    return False
 
 def command(command):
     """Perform actions that should be done every time a command is invoked."""

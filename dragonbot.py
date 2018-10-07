@@ -16,7 +16,6 @@ from command_dispatcher import CommandDispatcher
 from emotes import Emotes
 from insult import get_insult
 from keywords import Keywords
-from storage import Storage
 from util import split_command, command
 import constants
 import insult as insult_module
@@ -138,8 +137,8 @@ def init():
         logger.info('Exiting')
     atexit.register(log_exit)
 
-    # Add signal handler for restart signal
-    def restart(signal, frame):
+    # Add signal handler for restart signal. Ignore signal and frame args.
+    def restart(_signal, _frame):
         global client
         logger.info('Received restart signal')
         try:
@@ -235,7 +234,7 @@ def version():
             and getattr(opts, 'read_only') else '',
     )
 
-def help():
+def help_message():
     return """```
 {version}
 Commands:
@@ -287,16 +286,16 @@ async def truth(client, message):
     await message.channel.send(embed=discord.Embed(title='slushrfggts'))
 
 @command
-async def version_command(client, message):
+async def version_command(_client, message):
     """Say the bot's version."""
     await message.channel.send(version())
 
 @command
-async def show_help(client, message):
+async def show_help(_client, message):
     """Show help."""
-    command, argstr = util.split_command(message)
+    _command, argstr = util.split_command(message)
     if argstr is None:
-        await message.channel.send(help())
+        await message.channel.send(help_message())
     elif argstr.casefold() == 'emotes':
         await message.channel.send(Emotes.help())
     elif argstr.casefold() == 'keywords':
@@ -305,12 +304,12 @@ async def show_help(client, message):
         await message.channel.send("I don't have help for that.")
 
 @command
-async def test(client, message):
+async def test(_client, message):
     test_message = 'a' * 2500
     await message.channel.send(test_message)
 
 @command
-async def show_stats(client, message):
+async def show_stats(_client, message):
     """Show session statistics."""
     stats['uptime']         = time.time() - stats['start time']
     stats['emotes known']   = emotes.count_emotes()
@@ -347,9 +346,9 @@ async def say(client, message):
         await message.channel.send("Couldn't find channel.")
 
 @command
-async def insult(client, message):
+async def insult(_client, message):
     """Handles the !insult commmand."""
-    command, name = split_command(message)
+    _command, name = split_command(message)
     try:
         insult = get_insult(rate_limit=1.5)
         if not (insult.startswith("I ") or insult.startswith("I'm ")):
@@ -364,7 +363,7 @@ async def insult(client, message):
 @command
 async def set_current_game(client, message):
     """Handles the !play command."""
-    command, args = split_command(message)
+    _command, args = split_command(message)
     try:
         game, url = args.rsplit(maxsplit=1)
     except ValueError:
@@ -376,13 +375,13 @@ async def set_current_game(client, message):
     try:
         await client.change_presence(activity=game)
         await message.channel.send('Changed presence.')
-    except InvalidArgument:
+    except discord.InvalidArgument:
         await message.channel.send('Error changing presence.')
 
 @command
-async def purge(client, message):
+async def purge(_client, message):
     """Handles the !purge command."""
-    command, args = split_command(message)
+    _command, args = split_command(message)
     try:
         user, count = args.split(maxsplit=1)
     except ValueError:

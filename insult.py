@@ -41,10 +41,7 @@ class GetInsult(HTMLParser):
     def get_insult(self, content):
         self.feed(content)
         self.insult = self.insult.strip().replace("\n", "")
-        if self.insult != "":
-            return self.insult
-        else:
-            return None
+        return self.insult if self.insult != "" else None
 
 def get_insult(rate_limit=None):
     if rate_limit is not None:

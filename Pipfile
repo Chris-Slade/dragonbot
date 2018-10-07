@@ -8,6 +8,7 @@ name = "pypi"
 pyahocorasick = "*"
 
 [dev-packages]
+prospector = {version = "*", extras = ["with_vulture"]}
 
 [requires]
 python_version = "3.7"
