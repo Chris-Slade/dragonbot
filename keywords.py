@@ -7,6 +7,7 @@ import re
 from insult import random_insult
 from storage import Storage
 from util import command_method, server_command_method
+import config
 import constants
 import util
 
@@ -67,13 +68,13 @@ Keywords:
     just a reaction to reset the counter in isolation.
 ```""".format(prefix=constants.COMMAND_PREFIX)
 
-    def register_commands(self, cd, config):
+    def register_commands(self, cd):
         cd.register("addkeyword",    self.add_keyword,    rw=True)
         cd.register("deletekeyword", self.remove_keyword, rw=True)
         cd.register("removekeyword", self.remove_keyword, rw=True)
         cd.register("keywords",      self.list_keywords)
         cd.register("count",         self.show_count)
-        cd.register("refreshkeywords", self.refresh_keywords, may_use={config['owner_id']})
+        cd.register("refreshkeywords", self.refresh_keywords, may_use={config.owner_id})
         self.logger.info('Registered commands')
 
     def update_automaton(self, server):

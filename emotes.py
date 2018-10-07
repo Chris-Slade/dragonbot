@@ -5,6 +5,7 @@ import re
 from insult import random_insult
 from storage import Storage, KeyExistsError
 from util import server_command_method
+import config
 import constants
 import util
 
@@ -61,7 +62,7 @@ Emotes:
     Remove an emote.
 ```""".format(eprefix=constants.EMOTE_PREFIX, prefix=constants.COMMAND_PREFIX)
 
-    def register_commands(self, cd, config=None):
+    def register_commands(self, cd):
         """Register this module's commands with a CommandDispatcher.
 
         Arguments:
@@ -71,7 +72,7 @@ Emotes:
         cd.register("addemote",      self.add_emote,      rw=True)
         cd.register("deleteemote",   self.remove_emote,   rw=True)
         cd.register("removeemote",   self.remove_emote,   rw=True)
-        cd.register("refreshemotes", self.refresh_emotes, may_use={config['owner_id']})
+        cd.register("refreshemotes", self.refresh_emotes, may_use={config.owner_id})
         self.logger.info('Registered commands')
 
     def count_emotes(self):

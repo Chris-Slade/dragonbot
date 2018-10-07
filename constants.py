@@ -9,13 +9,10 @@ COMMAND_PREFIX = '!'
 # Prefix for emote messages
 EMOTE_PREFIX = '@'
 
-DEFAULT_CONFIG = 'config.json'
-DEFAULT_ENV_CONFIG = 'DRAGONBOT_CONFIG'
-DEFAULT_LOG_LEVEL = 'WARNING'
-DEFAULT_BOT_LOG_LEVEL = 'INFO'
-
 # TODO Make this configurable
 INSULTS_ENV_VAR = 'DRAGONBOT_INSULTS'
+
+LOG_LEVELS = [ 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL' ]
 
 LOG_FORMAT = ' | '.join([
     '%(asctime)s',

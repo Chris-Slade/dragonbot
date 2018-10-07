@@ -18,6 +18,7 @@ from emotes import Emotes
 from insult import get_insult
 from keywords import Keywords
 from util import split_command, command
+import config
 import constants
 import insult as insult_module
 import util
@@ -28,36 +29,36 @@ __version__ = '2.2.0'
 
 def getopts():
     """Handle bot arguments."""
-    defaults = {
-        'config'     : constants.DEFAULT_CONFIG,
-        'env_config' : constants.DEFAULT_ENV_CONFIG,
-        'global_log' : constants.DEFAULT_LOG_LEVEL,
-        'greet'      : True,
-        'log'        : constants.DEFAULT_BOT_LOG_LEVEL,
-        'read_only'  : False,
+    env_opts = {
+        'global_log'   : 'DRAGONBOT_LOG_LEVEL',
+        'greet'        : 'DRAGONBOT_GREET',
+        'insults_file' : 'DRAGONBOT_INSULTS_FILE',
+        'log'          : 'DRAGONBOT_MAIN_LOG_LEVEL',
+        'owner_id'     : 'DRAGONBOT_OWNER_ID',
+        'presence'     : 'DRAGONBOT_PRESENCE',
+        'read_only'    : 'DRAGONBOT_READ_ONLY',
+        'storage_dir'  : 'DRAGONBOT_STORAGE_DIR',
+        'token'        : 'DRAGONBOT_TOKEN',
     }
+    defaults = {
+        'global_log'   : os.getenv(env_opts['global_log'], default='WARNING'),
+        'greet'        : os.environ.get(env_opts['greet']) == 'True',
+        'insults_file' : os.getenv(env_opts['insults_file'], default='insults.json'),
+        'log'          : os.getenv(env_opts['log'], default='INFO'),
+        'owner_id'     : os.environ.get(env_opts['owner_id']),
+        'presence'     : os.environ.get(env_opts['presence']),
+        'read_only'    : os.environ.get(env_opts['read_only']) == 'True',
+        'storage_dir'  : os.getenv(env_opts['storage_dir'], default='storage'),
+        'token'        : os.environ.get(env_opts['token']),
+    }
+
     parser = argparse.ArgumentParser(description='Discord chat bot')
     parser.set_defaults(**defaults)
     parser.add_argument(
-        '-c', '--config',
-        type=str,
-        help='Specify the configuration file to use. Defaults to '
-            + defaults['config'] + '.'
-    )
-    parser.add_argument(
-        '-e', '--env-config',
-        type=str,
-        help='Load the configuration as JSON from the given environment'
-             ' variable, rather than using a configuration file.'
-             ' This option overrides --config.'
-    )
-    parser.add_argument(
         '--global-log',
-        type=str,
-        help='Set the logging level for all modules to the given level. Can be'
-            ' one of (from least to most verbose):'
-            ' DEBUG, INFO, WARNING, ERROR, CRITICAL.'
-            ' Defaults to ' + defaults['global_log'] + '.'
+        choices=constants.LOG_LEVELS,
+        help='Set the logging level for all modules to the given level.'
+            ' Environment variable: ' + env_opts['global_log']
     )
     parser.add_argument(
         '--greet',
@@ -65,24 +66,54 @@ def getopts():
         action='store_true',
         help='Tell the bot to issue a greeting to the greeting channel given'
             ' in the configuration file.'
+            ' Environment variable: ' + env_opts['greet']
     )
     parser.add_argument(
         '--no-greet',
         dest='greet',
         action='store_false',
         help='Tell the bot not to issue a greeting.'
+            ' Environment variable: ' + env_opts['greet']
+    )
+    parser.add_argument(
+        '--insults-file',
+        type=str,
+        help='The file of random insults to use. See the docstring for the'
+            ' random_insults function in insults.py for the proper format.'
+            ' Environment variable: ' + env_opts['insults_file']
     )
     parser.add_argument(
         '-l', '--log',
-        type=str,
+        choices=constants.LOG_LEVELS,
         help='Set the logging level for only the main module. Takes the same'
             ' values as `--global-log`. Defaults to ' + defaults['log'] + '.'
+            ' Environment variable: ' + env_opts['log']
+    )
+    parser.add_argument(
+        '--owner-id',
+        type=int,
+        help='The unique snowflake of the owner. This user is permitted to use'
+            ' owner-only commands. Required.'
+            ' Environment variable: ' + env_opts['owner_id']
+    )
+    parser.add_argument(
+        '--presence',
+        type=str,
+        help="The bot's presence, given as JSON."
+            ' Environment variable: ' + env_opts['presence']
     )
     parser.add_argument(
         '--read-only',
         action='store_true',
         help='Run the bot in read-only mode, preventing functions that access'
-            ' the disk from doing so.'
+            ' the disk or database from doing so.'
+            ' Environment variable: ' + env_opts['read_only']
+    )
+    parser.add_argument(
+        '--token',
+        type=str,
+        help='The authentication token to use for this bot. Required.'
+            ' Environment variable: ' + env_opts['token']
     )
     parser.add_argument(
         '--version',
@@ -91,10 +122,30 @@ def getopts():
     )
     opts = parser.parse_args()
 
+    if opts.presence is not None:
+        try:
+            opts.presence = json.loads(opts.presence)
+        except json.JSONDecodeError as e:
+            print('Presence argument is not valid JSON: ' + e.msg + '\n')
+            parser.print_help()
+            sys.exit(1)
+
+    # Since we allow env-var fallbacks, we can't use argparse's built-in
+    # "required" functionality.
+    for required_arg in ['token', 'owner_id']:
+        if required_arg not in opts or getattr(opts, required_arg) is None:
+            print(f'Error: Argument "{required_arg}" is required.', file=sys.stderr)
+            sys.exit(1)
+
     opts.global_log = util.get_log_level(opts.global_log)
     opts.log = util.get_log_level(opts.log)
 
-    return opts
+    # Initialize settings module
+    for name, val in vars(opts).items():
+        setattr(config, name, val)
+
+    config.initialized = True
+    return config
 
 ### INITIALIZATION ###
 
@@ -110,28 +161,28 @@ def init():
         emotes,             \
         keywords,           \
         logger,             \
-        opts,               \
         stats
 
     # Get options
-    opts = getopts()
+    getopts()
+    assert config.initialized, 'Settings were not initialized'
 
-    if (opts.version):
+    if (config.version):
         print(version())
         sys.exit(0)
 
     # Initialize logger
     logging.basicConfig(
-        level=opts.global_log,
+        level=config.global_log,
         format=constants.LOG_FORMAT,
         datefmt=constants.DATE_FORMAT
     )
     logger = logging.getLogger('dragonbot')
-    logger.setLevel(opts.log)
+    logger.setLevel(config.log)
     logger.info(
         'Set logging level to %s, global level to %s',
-        opts.log,
-        opts.global_log
+        config.log,
+        config.global_log
     )
 
     def log_exit():
@@ -150,27 +201,10 @@ def init():
             logger.warning(e)
     signal.signal(signal.SIGUSR1, restart)
 
-    # Initialize config
-    if opts.env_config and opts.env_config in os.environ:
-        logger.info('Loading config from environment')
-        config = json.loads(os.environ[opts.env_config])
-    else:
-        if opts.env_config:
-            logger.info(
-                'Environment config variable %s not present.'
-                ' Falling back on config file',
-                opts.env_config
-            )
-        logger.info('Loading config from %s', opts.config)
-        with open(opts.config, 'r', encoding='utf-8') as fh:
-            config = json.load(fh)
-
     # Initialize storage directory if needed
-    if 'storage_dir' not in config:
-        logger.warning('No storage directory specified, defaulting to ./storage/')
-        config['storage_dir'] = './storage/'
-    logger.info('Creating storage directory %s', config['storage_dir'])
-    os.makedirs(config['storage_dir'], exist_ok=True)
+    assert config.storage_dir is not None, 'Default storage dir not set'
+    logger.info('Creating storage directory %s', config.storage_dir)
+    os.makedirs(config.storage_dir, exist_ok=True)
 
     # Initialize emote and keyword modules
     logger.info('Initializing Emotes module')
@@ -179,8 +213,9 @@ def init():
     keywords = Keywords()
 
     # Set up command dispatcher
-    owner_only = { int(config['owner_id']) } # For registering commands as owner-only
-    cd = CommandDispatcher(read_only=opts.read_only)
+    assert config.owner_id is not None, 'No owner ID configured'
+    owner_only = { int(config.owner_id) } # For registering commands as owner-only
+    cd = CommandDispatcher(read_only=config.read_only)
     cd.register("help", show_help)
     cd.register("insult", insult)
     cd.register("play", set_current_game, may_use=owner_only)
@@ -190,8 +225,8 @@ def init():
     cd.register("test", test, may_use=owner_only, rw=True)
     cd.register("truth", truth)
     cd.register("version", version_command)
-    emotes.register_commands(cd, config)
-    keywords.register_commands(cd, config)
+    emotes.register_commands(cd)
+    keywords.register_commands(cd)
     command_dispatcher = cd # Make global
 
     logger.debug(", ".join(cd.known_command_names()))
@@ -205,7 +240,6 @@ def init():
         emotes,
         keywords,
         logger,
-        opts,
         stats
     ), 'Variable was not initialized'
 
@@ -218,9 +252,9 @@ def main():
     assert version(), "version() should return a non-empty string, but didn't"
     stats['start time'] = time.time()
     try:
-        client.run(config['credentials']['token'])
+        client.run(config.token)
     except Exception:
-        logging.error("Exception reached main()")
+        logging.exception("Exception reached main()")
         return
 
 def version():
@@ -230,9 +264,7 @@ def version():
         __version__,
         discord.__version__,
         ' [DEBUG MODE]' if __debug__ else '',
-        ' [READ ONLY]' if 'opts' in globals()
-            and hasattr(opts, 'read_only')
-            and getattr(opts, 'read_only') else '',
+        ' [READ ONLY]' if config.read_only else '',
     )
 
 def help_message():
@@ -445,34 +477,31 @@ async def on_ready():
     logger.info('Bot is ready')
     stats['connect time'] = time.time() - stats['start time']
 
-    if 'servers' in config:
-        # Log server and default channel
-        for server in client.guilds:
-            logger.info("Logged into server %s %s", server, server.id)
-            if (
-                hasattr(server, 'default_channel')
-                and server.default_channel is not None
-            ):
-                logger.info("Default channel is %s", server.default_channel)
-            for channel in server.channels:
-                if isinstance(channel, discord.TextChannel):
-                    logger.info('\tChannel: %s %s', channel.name, channel.id)
+    # Log server and default channel
+    for server in client.guilds:
+        logger.info("Logged into server %s %s", server, server.id)
+        if (
+            hasattr(server, 'default_channel')
+            and server.default_channel is not None
+        ):
+            logger.info("Default channel is %s", server.default_channel)
+        for channel in server.channels:
+            if isinstance(channel, discord.TextChannel):
+                logger.info('\tChannel: %s %s', channel.name, channel.id)
 
-            if (
-                opts.greet and hasattr(server, 'default_channel')
-                and server.default_channel is not None
-            ):
-                await server.default_channel.send(version())
+        if (
+            config.greet and hasattr(server, 'default_channel')
+            and server.default_channel is not None
+        ):
+            await server.default_channel.send(version())
 
-            emotes.add_server(server, config['storage_dir'])
-            keywords.add_server(server, config['storage_dir'])
-    else:
-        logger.warning("Couldn't find servers")
+        emotes.add_server(server, config.storage_dir)
+        keywords.add_server(server, config.storage_dir)
 
-    if 'presence' in config:
-        presence = config['presence']
+    if config.presence is not None:
+        presence = config.presence
         if 'playing' in presence:
-            playing = config['presence']['playing']
+            playing = presence['playing']
             game = None
             if 'name' in playing:
                 name = playing['name']
