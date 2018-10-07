@@ -4,6 +4,8 @@ import re
 import sys
 import unicodedata
 
+from datetime import datetime, timedelta
+
 def chunker(seq, size):
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
@@ -80,3 +82,11 @@ def server_command_method(command):
         else:
             await command(self, client, message)
     return wrapper
+
+def ts_to_iso(timestamp):
+    """Convert a UNIX timestamp to an ISO-8601-formatted string."""
+    return datetime.fromtimestamp(timestamp).isoformat()
+
+def td_str(time_difference):
+    """Convert a time difference in seconds to a human-readable string."""
+    return str(timedelta(seconds=time_difference))

@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import atexit
 import collections
+import datetime
 import discord
 import json
 import logging
@@ -21,7 +22,7 @@ import constants
 import insult as insult_module
 import util
 
-__version__ = '2.1.1'
+__version__ = '2.2.0'
 
 ### ARGUMENTS ###
 
@@ -315,16 +316,24 @@ async def show_stats(_client, message):
     stats['emotes known']   = emotes.count_emotes()
     stats['keywords known'] = keywords.count_keywords()
 
-    sb = ["```Session statistics:"]
-
-    longest = max(len(_) for _ in stats)
-    stat_fmt = '\t{:<' + str(longest + 1) + '}: {:>7}'
-
-    for stat in sorted(stats.keys()):
-        sb.append(stat_fmt.format(stat.title(), stats[stat]))
-    sb.append("```")
-    stat_message = "\n".join(sb)
-    await message.channel.send(stat_message)
+    embed = discord.Embed(
+        title='Session Statistics',
+        description='Statistics collected since Dragonbot was last started',
+        timestamp=datetime.datetime.now(),
+    )
+    for field in [
+        [ 'Start time',     util.ts_to_iso(stats['start time']), True ],
+        [ 'Connect time',   util.td_str(stats['connect time']),  True ],
+        [ 'Uptime',         util.td_str(stats['uptime']),        True ],
+        [ 'Avg. latency',   util.td_str(client.latency),         True ],
+        [ 'Messages seen',  stats['messages seen'],              True ],
+        [ 'Commands seen',  stats['commands seen'],              True ],
+        [ 'Emotes known',   stats['emotes known'],               True ],
+        [ 'Keywords known', stats['keywords known'],             True ],
+    ]:
+        embed.add_field(name=field[0], value=field[1], inline=(field[2] or False))
+    embed.set_footer(text=version())
+    await message.channel.send(embed=embed)
 
 @command
 async def say(client, message):
