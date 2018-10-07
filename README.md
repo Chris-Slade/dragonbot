@@ -8,15 +8,8 @@ going nowhere. The `.1` is because this is the second remote repository for
 this iteration of DragonBot; the first repository no longer exists.
 
 # Dependencies
-This bot uses the
-[discord.py](http://discordpy.readthedocs.io/en/latest/index.html) framework,
-specifically version 0.16.0, though I plan to update the bot to work with later
-versions as long as I continue to use it. This naturally means that this bot's
-dependencies include all of discord.py's dependencies.
+This project uses pipenv for dependency management. Install pipenv and use
 
-This bot also uses [pyahocorasick](https://pypi.python.org/pypi/pyahocorasick)
-to do efficient matching of keywords in messages. As I continue to work on
-improving the code quality and making the bot more modular, this dependency may
-become optional.
+    pipenv install
 
-All other dependencies are part of Python's core library.
+to install all dependencies.
