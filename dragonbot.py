@@ -31,23 +31,23 @@ __version__ = '2.2.0'
 def getopts():
     """Handle bot arguments."""
     env_opts = {
-        'global_log'   : 'DRAGONBOT_LOG_LEVEL',
-        'greet'        : 'DRAGONBOT_GREET',
-        'insults'      : 'DRAGONBOT_INSULTS',
-        'insults_file' : 'DRAGONBOT_INSULTS_FILE',
-        'log'          : 'DRAGONBOT_MAIN_LOG_LEVEL',
-        'owner_id'     : 'DRAGONBOT_OWNER_ID',
-        'presence'     : 'DRAGONBOT_PRESENCE',
-        'read_only'    : 'DRAGONBOT_READ_ONLY',
-        'storage_dir'  : 'DRAGONBOT_STORAGE_DIR',
-        'token'        : 'DRAGONBOT_TOKEN',
+        'global_log_level' : 'DRAGONBOT_GLOBAL_LOG_LEVEL',
+        'greet'            : 'DRAGONBOT_GREET',
+        'insults'          : 'DRAGONBOT_INSULTS',
+        'insults_file'     : 'DRAGONBOT_INSULTS_FILE',
+        'log_level'        : 'DRAGONBOT_LOG_LEVEL',
+        'owner_id'         : 'DRAGONBOT_OWNER_ID',
+        'presence'         : 'DRAGONBOT_PRESENCE',
+        'read_only'        : 'DRAGONBOT_READ_ONLY',
+        'storage_dir'      : 'DRAGONBOT_STORAGE_DIR',
+        'token'            : 'DRAGONBOT_TOKEN',
     }
     defaults = {
-        'global_log'   : os.getenv(env_opts['global_log'], default='WARNING'),
+        'global_log_level' : os.getenv(env_opts['global_log_level'], default='WARNING'),
         'greet'        : os.environ.get(env_opts['greet']) == 'True',
         'insults'      : os.environ.get(env_opts['insults']),
         'insults_file' : os.environ.get(env_opts['insults_file']),
-        'log'          : os.getenv(env_opts['log'], default='INFO'),
+        'log_level'    : os.getenv(env_opts['log_level'], default='INFO'),
         'owner_id'     : os.environ.get(env_opts['owner_id']),
         'presence'     : os.environ.get(env_opts['presence']),
         'read_only'    : os.environ.get(env_opts['read_only']) == 'True',
@@ -58,10 +58,10 @@ def getopts():
     parser = argparse.ArgumentParser(description='Discord chat bot')
     parser.set_defaults(**defaults)
     parser.add_argument(
-        '--global-log',
+        '--global-log-level',
         choices=constants.LOG_LEVELS,
         help='Set the logging level for all modules to the given level.'
-            ' Environment variable: ' + env_opts['global_log']
+            ' Environment variable: ' + env_opts['global_log_level']
     )
     parser.add_argument(
         '--greet',
@@ -100,11 +100,11 @@ def getopts():
             ' read the insults.'
     )
     parser.add_argument(
-        '-l', '--log',
+        '-l', '--log-level',
         choices=constants.LOG_LEVELS,
         help='Set the logging level for only the main module. Takes the same'
-            ' values as `--global-log`. Defaults to ' + defaults['log'] + '.'
-            ' Environment variable: ' + env_opts['log']
+            ' values as `--global-log-level`.'
+            ' Environment variable: ' + env_opts['log_level']
     )
     parser.add_argument(
         '--owner-id',
@@ -160,8 +160,8 @@ def getopts():
         with open(opts.insults_file, 'r', encoding='utf-8') as fh:
             opts.insults = _get_insults(json.load(fh))
 
-    opts.global_log = util.get_log_level(opts.global_log)
-    opts.log = util.get_log_level(opts.log)
+    opts.global_log_level = util.get_log_level(opts.global_log_level)
+    opts.log_level = util.get_log_level(opts.log_level)
 
     # Initialize settings module
     for name, val in vars(opts).items():
@@ -213,16 +213,16 @@ def init():
 
     # Initialize logger
     logging.basicConfig(
-        level=config.global_log,
+        level=config.global_log_level,
         format=constants.LOG_FORMAT,
         datefmt=constants.DATE_FORMAT
     )
     logger = logging.getLogger('dragonbot')
-    logger.setLevel(config.log)
+    logger.setLevel(config.log_level)
     logger.info(
         'Set logging level to %s, global level to %s',
-        config.log,
-        config.global_log
+        config.log_level,
+        config.global_log_level,
     )
 
     def log_exit():
