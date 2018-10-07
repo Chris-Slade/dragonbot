@@ -65,14 +65,14 @@ def getopts():
         dest='greet',
         action='store_true',
         help='Tell the bot to issue a greeting to the greeting channel given'
-            ' in the configuration file.'
+            ' in the configuration file. (Deprecated.)'
             ' Environment variable: ' + env_opts['greet']
     )
     parser.add_argument(
         '--no-greet',
         dest='greet',
         action='store_false',
-        help='Tell the bot not to issue a greeting.'
+        help='Tell the bot not to issue a greeting. (Deprecated.)'
             ' Environment variable: ' + env_opts['greet']
     )
     parser.add_argument(
