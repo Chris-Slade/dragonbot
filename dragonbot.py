@@ -216,6 +216,7 @@ def init():
     assert config.owner_id is not None, 'No owner ID configured'
     owner_only = { int(config.owner_id) } # For registering commands as owner-only
     cd = CommandDispatcher(read_only=config.read_only)
+    cd.register("config", show_config, may_use=owner_only)
     cd.register("help", show_help)
     cd.register("insult", insult)
     cd.register("play", set_current_game, may_use=owner_only)
@@ -335,6 +336,27 @@ async def show_help(_client, message):
         await message.channel.send(Keywords.help())
     else:
         await message.channel.send("I don't have help for that.")
+
+@command
+async def show_config(_client, message):
+    """Show the current bot configuration."""
+    dm_channel = message.author.dm_channel
+    if dm_channel is None:
+        await message.author.create_dm()
+        dm_channel = message.author.dm_channel
+    embed = discord.Embed(
+        title='Configuration',
+        description='The current bot configuration.',
+        timestamp=datetime.datetime.now(),
+    )
+    for name, val in sorted(vars(config).items()):
+        if name.startswith('_'):
+            continue
+        if name == 'token':
+            val = '<hidden>'
+        embed.add_field(name=name, value=val, inline=False)
+    embed.set_footer(text=version())
+    await dm_channel.send(embed=embed)
 
 @command
 async def test(_client, message):
