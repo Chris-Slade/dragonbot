@@ -36,6 +36,7 @@ def getopts():
         'insults'          : 'DRAGONBOT_INSULTS',
         'insults_file'     : 'DRAGONBOT_INSULTS_FILE',
         'log_level'        : 'DRAGONBOT_LOG_LEVEL',
+        'mongodb_uri'      : 'DRAGONBOT_MONGODB_URI',
         'owner_id'         : 'DRAGONBOT_OWNER_ID',
         'presence'         : 'DRAGONBOT_PRESENCE',
         'read_only'        : 'DRAGONBOT_READ_ONLY',
@@ -48,10 +49,11 @@ def getopts():
         'insults'      : os.environ.get(env_opts['insults']),
         'insults_file' : os.environ.get(env_opts['insults_file']),
         'log_level'    : os.getenv(env_opts['log_level'], default='INFO'),
+        'mongodb_uri'  : os.environ.get(env_opts['mongodb_uri']),
         'owner_id'     : os.environ.get(env_opts['owner_id']),
         'presence'     : os.environ.get(env_opts['presence']),
         'read_only'    : os.environ.get(env_opts['read_only']) == 'True',
-        'storage_dir'  : os.getenv(env_opts['storage_dir'], default='storage'),
+        'storage_dir'  : os.environ.get(env_opts['storage_dir']),
         'token'        : os.environ.get(env_opts['token']),
     }
 
@@ -107,6 +109,12 @@ def getopts():
             ' Environment variable: ' + env_opts['log_level']
     )
     parser.add_argument(
+        '--mongodb-uri',
+        type=str,
+        help='Connection URI for MongoDB. If provided, MongoDB will be used'
+            ' instead of flat files for storage.'
+    )
+    parser.add_argument(
         '--owner-id',
         type=int,
         help='The unique snowflake of the owner. This user is permitted to use'
@@ -125,6 +133,13 @@ def getopts():
         help='Run the bot in read-only mode, preventing functions that access'
             ' the disk or database from doing so.'
             ' Environment variable: ' + env_opts['read_only']
+    )
+    parser.add_argument(
+        '--storage-dir',
+        type=str,
+        help='If using flat-file storage, the directory in which the files'
+            ' will be saved. If it does not exist, it will be created.'
+            ' Environment variable: ' + env_opts['storage_dir']
     )
     parser.add_argument(
         '--token',
@@ -159,6 +174,13 @@ def getopts():
     elif opts.insults_file:
         with open(opts.insults_file, 'r', encoding='utf-8') as fh:
             opts.insults = _get_insults(json.load(fh))
+
+    if opts.storage_dir and opts.mongodb_uri:
+        print('You cannot give both --storage-dir and --mongodb-uri.')
+        sys.exit(1)
+    elif not opts.storage_dir and not opts.mongodb_uri:
+        print('You must specify either --storage-dir or --mongodb-uri.')
+        sys.exit(1)
 
     opts.global_log_level = util.get_log_level(opts.global_log_level)
     opts.log_level = util.get_log_level(opts.log_level)
@@ -242,9 +264,9 @@ def init():
     signal.signal(signal.SIGUSR1, restart)
 
     # Initialize storage directory if needed
-    assert config.storage_dir is not None, 'Default storage dir not set'
-    logger.info('Creating storage directory %s', config.storage_dir)
-    os.makedirs(config.storage_dir, exist_ok=True)
+    if config.storage_dir:
+        logger.info('Creating storage directory %s', config.storage_dir)
+        os.makedirs(config.storage_dir, exist_ok=True)
 
     # Initialize emote and keyword modules
     logger.info('Initializing Emotes module')
@@ -557,8 +579,8 @@ async def on_ready():
         ):
             await server.default_channel.send(version())
 
-        emotes.add_server(server, config.storage_dir)
-        keywords.add_server(server, config.storage_dir)
+        emotes.add_server(server)
+        keywords.add_server(server)
 
     if config.presence is not None:
         presence = config.presence
