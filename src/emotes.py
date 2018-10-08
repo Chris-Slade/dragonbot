@@ -138,11 +138,8 @@ class Emotes():
 
     @server_command_method
     async def refresh_emotes(self, _client, message):
-        if hasattr(message, 'guild'):
-            self.emotes[message.channel.guild.id].load()
-            await message.channel.send('Emotes refreshed!')
-        else:
-            await message.channel.send('You must be in a server to do that.')
+        self.emotes[message.channel.guild.id].load()
+        await message.channel.send('Emotes refreshed!')
 
     @server_command_method
     async def list_emotes(self, _client, message):

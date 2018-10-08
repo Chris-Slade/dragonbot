@@ -11,9 +11,6 @@ from datetime import datetime, timedelta
 def chunker(seq, size):
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
-def not_none(value, default):
-    return value if value is not None else default
-
 def get_log_level(level_str):
     try:
         level = getattr(logging, level_str)
@@ -24,10 +21,12 @@ def get_log_level(level_str):
         return None
 
 def remove_punctuation(text):
+    """Remove punctuation and symbols from a string."""
     if not hasattr(remove_punctuation, '_tbl'):
         remove_punctuation._tbl = dict.fromkeys(
             i for i in range(sys.maxunicode)
                 if unicodedata.category(chr(i)).startswith('P')
+                or unicodedata.category(chr(i)).startswith('S')
         )
     return text.translate(remove_punctuation._tbl)
 
@@ -77,7 +76,7 @@ def server_command_method(command):
     async def wrapper(self, client,  message):
         assert client is not None, 'Got None for client'
         assert message is not None, 'Got None for message'
-        if message.guild is None:
+        if not hasattr(message, 'guild') or message.guild is None:
             await message.channel.send(
                 'This command can only be used in a server context.'
             )
