@@ -7,7 +7,7 @@ compile:
 	$(PY) -mpy_compile $(SRC)
 
 test:
-	cd src/ && $(PY) -m unittest discover -s ../test -v
+	PYTHONPATH=src $(PY) -m unittest discover -s test -v
 
 lint:
 	prospector

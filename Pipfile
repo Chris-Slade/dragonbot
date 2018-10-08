@@ -10,6 +10,7 @@ pymongo = "*"
 
 [dev-packages]
 prospector = {version = "*", extras = ["with_vulture"]}
+mockito = "*"
 
 [requires]
 python_version = "3.7"

@@ -21,7 +21,16 @@ class Emotes():
 
     def add_server(self, server, storage):
         """Track emotes for a server."""
-        self.emotes[server.id] = storage
+        self.logger.info('Tracking emotes for server %d', server.id)
+        self._set_server_emotes(server.id, storage)
+
+    def _set_server_emotes(self, server_id, emotes):
+        """Set the emotes for a server."""
+        self.emotes[server_id] = emotes
+
+    def _get_server_emotes(self, server_id):
+        """Get the emotes for a server."""
+        return self.emotes[server_id]
 
     @staticmethod
     def help():
@@ -96,8 +105,8 @@ class Emotes():
             return
 
         try:
-            self.emotes[message.guild.id][emote] = body
-            self.emotes[message.guild.id].save()
+            self._get_server_emotes(message.guild.id)[emote] = body
+            self._get_server_emotes(message.guild.id).save()
             self.logger.info(
                 '[%s] %s added emote "%s"',
                 message.guild,
@@ -122,8 +131,8 @@ class Emotes():
 
         emote = argstr
         try:
-            del self.emotes[message.guild.id][emote]
-            self.emotes[message.guild.id].save()
+            del self._get_server_emotes(message.guild.id)[emote]
+            self._get_server_emotes(message.guild.id).save()
             self.logger.info(
                 '[%s] %s deleted emote "%s"',
                 message.guild,
@@ -139,17 +148,17 @@ class Emotes():
 
     @server_command_method
     async def refresh_emotes(self, _client, message):
-        self.emotes[message.channel.guild.id].load()
+        self._get_server_emotes(message.channel.guild.id).load()
         await message.channel.send('Emotes refreshed!')
 
     @server_command_method
     async def list_emotes(self, _client, message):
-        if not self.emotes[message.guild.id]:
+        if not self._get_server_emotes(message.guild.id):
             await message.channel.send(
                 "I don't have any emotes for this server yet!"
             )
         for chunk in util.chunker(
-            self.emotes[message.guild.id].as_text_list(),
+            self._get_server_emotes(message.guild.id).as_text_list(),
             constants.MAX_CHARACTERS
         ):
             await message.channel.send(chunk)
@@ -157,7 +166,7 @@ class Emotes():
     @server_command_method
     async def display_emote(self, _client, message):
         emote = message.clean_content[1:]
-        server_emotes = self.emotes[message.guild.id]
+        server_emotes = self._get_server_emotes(message.guild.id)
         if emote in server_emotes:
             if util.is_embeddable_image_url(server_emotes[emote]):
                 self.logger.debug('Detected image emote "%s"; posting as embed')

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "585553f3821e623c4213b3a997eb26c48c25398c0e41118f569b27053617ab70"
+            "sha256": "e83d256b3af3be3f148e9043833c324a865ae59b292c1709daa5c155a0e37af8"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -141,6 +141,13 @@
                 "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"
             ],
             "version": "==0.6.1"
+        },
+        "mockito": {
+            "hashes": [
+                "sha256:142f5e8865a422ad2d67b9c67a382e3296e8f1633dbccd0e322180fba7d5303d"
+            ],
+            "index": "pypi",
+            "version": "==1.1.1"
         },
         "pep8-naming": {
             "hashes": [
