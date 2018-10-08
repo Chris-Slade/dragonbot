@@ -27,34 +27,38 @@ class Keywords():
 
     @staticmethod
     def help():
-        return """```
-Keywords:
-  The bot counts keywords and sends messages when "gets" occur.
-  (Technically, it counts messages in which a keyword occurs.) The bot
-  can also post reactions to keywords.
-
-  {prefix}addkeyword <keyword> <optional reaction>
-    Add a keyword. The bot will count these keywords and send a message
-    when a "get" occurs. In addition, reactions may be given, which
-    are automatically added to messages containing keywords. A given
-    keyword may have zero or more reactions, but they have to be added
-    one at a time. The syntax of this command might change to allow for
-    keyphrases in addition to just words.
-
-  {prefix}count <keyword>
-    Show the current count of a given keyword.
-
-  {prefix}deletekeyword
-    Alias for `removekeyword`.
-
-  {prefix}refreshkeywords
-    (Owner only.) Reload the keywords for the current server.
-
-  {prefix}removekeyword <keyword>
-    Remove a keyword. WARNING: This removes a keyword with its count and
-    all associated reactions. There is currently not a way to remove
-    just a reaction to reset the counter in isolation.
-```""".format(prefix=constants.COMMAND_PREFIX)
+        help_msgs = [ [
+            '{prefix}addkeyword `<keyword>` `<optional reaction>`',
+            'Add a keyword. The bot will count these keywords and send a message'
+            ' when a "get" occurs. In addition, reactions may be given, which'
+            ' are automatically added to messages containing keywords. A given'
+            ' keyword may have zero or more reactions, but they have to be added'
+            ' one at a time. The syntax of this command might change to allow for'
+            ' keyphrases in addition to just words.'
+        ], [
+            '{prefix}count `<keyword>`',
+            'Show the current count of a given keyword.'
+        ], [
+            '{prefix}deletekeyword',
+            'Alias for `removekeyword`.'
+        ], [
+            '{prefix}refreshkeywords',
+            '(Owner only.) Reload the keywords for the current server.'
+        ], [
+            '{prefix}removekeyword `<keyword>`',
+            'Remove a keyword. **WARNING**: This removes a keyword with its'
+            ' count and all associated reactions. There is currently not a way'
+            ' to remove just a reaction to reset the counter in isolation.'
+        ] ]
+        return util.create_help_embed(
+            title='Keywords',
+            description='The bot counts keywords and sends messages when'
+            ' "gets" occur. (Technically, it counts messages in which a'
+            ' keyword occurs. In other words, a keyword is only counted once'
+            ' per message, preventing spam.) The bot can also post reactions'
+            ' to keywords.',
+            help_msgs=help_msgs
+        )
 
     def register_commands(self, cd):
         cd.register("addkeyword",    self.add_keyword,    rw=True)

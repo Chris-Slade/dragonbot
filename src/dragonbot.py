@@ -26,7 +26,7 @@ import constants
 import insult as insult_module
 import util
 
-__version__ = '3.1.1'
+__version__ = '3.2.0'
 
 ### ARGUMENTS ###
 
@@ -342,47 +342,52 @@ def version():
     )
 
 def help_message():
-    return """```
-{version}
-Commands:
-  Commands are activated by sending a message beginning with the prefix
-
-  "{prefix}" followed by the name of the command and zero or more
-  arguments.
-
-  {prefix}help
-    Show this help message.
-
-  {prefix}help <section>
-    Show the help section for a submodule. Options are `emotes` and `keywords`.
-
-  {prefix}insult <someone's name>
-    Insult someone with a random insult.
-
-  {prefix}play <game> <url>
-    Set the bot's status as playing the given game. Owner only. The URL can be
-    "None".
-
-  {prefix}purge <@user> <count>
-    Purges up to <count> messages from the mentioned <@user>. <count> must be
-    at least 2 but no more than 100. Deleted messages cannot be older than 14
-    days. Subject to the limitations imposed by the Discord API.
-
-  {prefix}say <channel ID> <message>
-    Have the bot post a message in a given channel. Owner only.
-
-  {prefix}stats
-    Show bot statistics.
-
-  {prefix}test
-    For testing and debugging. For the bot owner's use only.
-
-  {prefix}truth
-    Tell the truth.
-
-  {prefix}version
-    Say the bot's version.
-```""".format(version=version(), prefix=constants.COMMAND_PREFIX)
+    help_msgs = [ [
+        '{prefix}help',
+        'Show this help message.'
+    ], [
+        '{prefix}help `<section>`',
+        'Show the help section for a submodule. Options are `emotes`'
+        ' and `keywords`.'
+    ], [
+        '{prefix}config',
+        'Show the current bot configuration. Owner only.'
+    ], [
+        '{prefix}insult `<someone\'s name>`',
+        'Insult someone with a random insult.'
+    ], [
+        '{prefix}play `<game>` `<url>`',
+        'Set the bot\'s status as playing the given game. Owner only.'
+        ' The URL can be "None".'
+    ], [
+        '{prefix}purge `<@user>` `<count>`',
+        'Purges up to `<count>` messages from the mentioned <@user>.'
+        ' `<count>` must be at least 2 but no more than 100.'
+        ' Deleted messages cannot be older than 14 days.'
+        ' Subject to the limitations imposed by the Discord API.'
+    ], [
+        '{prefix}say `<channel ID>` `<message>`',
+        'Have the bot post a message in a given channel. Owner only.'
+    ], [
+        '{prefix}stats',
+        'Show bot statistics.'
+    ], [
+        '{prefix}test',
+        'For testing and debugging. For the bot owner\'s use only.'
+    ], [
+        '{prefix}truth',
+        'Tell the truth.'
+    ], [
+        '{prefix}version',
+        'Say the bot\'s version.'
+    ] ]
+    return util.create_help_embed(
+        title='Commands',
+        description='Commands are activated by sending a message beginning'
+            ' with the prefix "{prefix}" followed by the name of the command'
+            ' and zero or more arguments.'.format(prefix=constants.COMMAND_PREFIX),
+        help_msgs=help_msgs
+    )
 
 ### COMMANDS ###
 
@@ -390,7 +395,12 @@ Commands:
 async def truth(client, message):
     """Say the truth."""
     assert None not in (client, message), 'Got None, expected value'
-    await message.channel.send(embed=discord.Embed(title='slushrfggts'))
+    await message.channel.send(
+        embed=discord.Embed(
+            title='slushrfggts',
+            color=constants.EMBED_COLOR
+        )
+    )
 
 @command
 async def version_command(_client, message):
@@ -402,13 +412,18 @@ async def show_help(_client, message):
     """Show help."""
     _command, argstr = util.split_command(message)
     if argstr is None:
-        await message.channel.send(help_message())
+        help_msg = help_message()
     elif argstr.casefold() == 'emotes':
-        await message.channel.send(Emotes.help())
+        help_msg = Emotes.help()
     elif argstr.casefold() == 'keywords':
-        await message.channel.send(Keywords.help())
+        help_msg = Keywords.help()
     else:
         await message.channel.send("I don't have help for that.")
+    if isinstance(help_msg, discord.Embed):
+        help_msg.set_footer(text=version())
+        await message.channel.send(embed=help_msg)
+    else:
+        await message.channel.send(help_msg)
 
 @command
 async def show_config(_client, message):
@@ -421,6 +436,7 @@ async def show_config(_client, message):
         title='Configuration',
         description='The current bot configuration.',
         timestamp=datetime.datetime.now(),
+        color=constants.EMBED_COLOR,
     )
     for name, val in sorted(vars(config).items()):
         if name.startswith('_'):
@@ -447,6 +463,7 @@ async def show_stats(_client, message):
         title='Session Statistics',
         description='Statistics collected since Dragonbot was last started',
         timestamp=datetime.datetime.now(),
+        color=constants.EMBED_COLOR,
     )
     for field in [
         [ 'Start time',     util.ts_to_iso(stats['start time']), True ],

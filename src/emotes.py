@@ -24,31 +24,35 @@ class Emotes():
 
     @staticmethod
     def help():
-        return """```
-Emotes:
-  Emotes are activated by sending a message beginning with the prefix
-  "{eprefix}" followed by the name of the emote.
-
-  {prefix}addemote {{<emote name>}}{{<emote payload>}}
-    Adds an emote. For example, `!addemote
-    {{example}}{{http://example.com/emote.png}}` will allow you to
-    use `@example` to have the corresponding URL posted by the bot.
-    Because both emote names and the corresponding strings may contain
-    whitespace, both must be surrounded by curly braces, as in the
-    example.
-
-  {prefix}deleteemote <emote name>
-    Alias for `{prefix}removeemote`.
-
-  {prefix}emotes
-    Show a list of known emotes.
-
-  {prefix}refreshemotes
-    (Owner only.) Reload the emotes for the current server.
-
-  {prefix}removeemote <emote name>
-    Remove an emote.
-```""".format(eprefix=constants.EMOTE_PREFIX, prefix=constants.COMMAND_PREFIX)
+        return util.create_help_embed(
+            title='Emotes',
+            description='Emotes are activated by sending a message beginning'
+                ' with the prefix "{eprefix}" followed by the name of the'
+                ' emote.'.format(eprefix=constants.EMOTE_PREFIX),
+            help_msgs=[ [
+                '{prefix}addemote {{<emote name>}}{{<emote payload>}}',
+                'Adds an emote. For example, `!addemote'
+                ' {{example}}{{http://example.com/emote.png}}` will allow you'
+                ' to use `@example` to have the corresponding URL posted by'
+                ' the bot. Because both emote names and the corresponding'
+                ' strings may contain whitespace, both must be surrounded by'
+                ' curly braces, as in the example.'
+                ' Note that the emote payload can be an arbitrary string, not'
+                ' just a URL. (You can use it for copypasta.)'
+            ], [
+                '{prefix}deleteemote `<emote name>`',
+                'Alias for `{prefix}removeemote`.'
+            ], [
+                '{prefix}emotes',
+                'Show a list of known emotes.'
+            ], [
+                '{prefix}refreshemotes',
+                '(Owner only.) Reload the emotes for the current server.'
+            ], [
+                '{prefix}removeemote `<emote name>`',
+                'Remove an emote.'
+            ] ]
+        )
 
     def register_commands(self, cd):
         """Register this module's commands with a CommandDispatcher.

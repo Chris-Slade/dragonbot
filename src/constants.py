@@ -10,6 +10,8 @@ COMMAND_PREFIX = '!'
 EMOTE_PREFIX = '@'
 # Default insult for when no insults file is provided
 DEFAULT_INSULT = 'you dummy'
+# Default color for embeds created by the bot
+EMBED_COLOR = 0xFF00FF
 
 LOG_LEVELS = [ 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL' ]
 

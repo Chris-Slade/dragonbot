@@ -1,3 +1,5 @@
+import constants
+import discord
 import functools
 import logging
 import re
@@ -90,3 +92,18 @@ def ts_to_iso(timestamp):
 def td_str(time_difference):
     """Convert a time difference in seconds to a human-readable string."""
     return str(timedelta(seconds=time_difference))
+
+def create_help_embed(title, description, help_msgs):
+    embed = discord.Embed(
+        title=title,
+        description=description,
+        timestamp=datetime.now(),
+        color=constants.EMBED_COLOR,
+    )
+    for help_msg in help_msgs:
+        embed.add_field(
+            name=help_msg[0].format(prefix=constants.COMMAND_PREFIX),
+            value=help_msg[1],
+            inline=False
+        )
+    return embed
