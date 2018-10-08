@@ -70,7 +70,7 @@ Keywords:
         self.automata[server.id] = ahocorasick.Automaton(str)
         automaton = self.automata[server.id]
         # Add each keyword
-        for keyword in self.keywords[server.id]:
+        for keyword in self.keywords[server.id].data:
             automaton.add_word(keyword, keyword)
         # Finalize the automaton for searching
         automaton.make_automaton()
