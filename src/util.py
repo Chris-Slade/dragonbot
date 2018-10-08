@@ -5,6 +5,7 @@ import logging
 import re
 import sys
 import unicodedata
+import urllib.parse
 
 from datetime import datetime, timedelta
 
@@ -106,3 +107,9 @@ def create_help_embed(title, description, help_msgs):
             inline=False
         )
     return embed
+
+def validate_url(string):
+    parsed = urllib.parse.urlparse(string)
+    if parsed.scheme and parsed.netloc and parsed.path:
+        return parsed.geturl()
+    return None
