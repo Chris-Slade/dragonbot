@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections import UserDict
 import atexit
 import config
 import json
@@ -19,14 +20,16 @@ def storage_injector(store_type, store_id):
         return MongoStorage(**storage_args)
     return None
 
-class Storage(ABC, dict):
-    """A subclass of dict with additional methods for storing and
+class Storage(ABC, UserDict):
+    """A subclass of UserDict with additional methods for storing and
     retrieving the mappings to and from JSON files, respectively.
     """
 
     # pylint: disable=unused-argument
     def __init__(self, store_type, store_id):
         super().__init__()
+        self.store_type = store_type
+        self.store_id = store_id
         self.logger = logging.getLogger('dragonbot.' + __name__)
         atexit.register(self.save)
 
@@ -40,7 +43,7 @@ class Storage(ABC, dict):
 
     def __setitem__(self, key, value):
         key = _normalize_key(key)
-        self.logger.info('Set "%s" to "%s"', key, value)
+        self.logger.debug('Set "%s" to "%s"', key, value)
         return super().__setitem__(key, value)
 
     def __getitem__(self, key):
@@ -71,8 +74,6 @@ class FileStorage(Storage):
             config.storage_dir,
             str(store_id)
         )
-        self.store_type = store_type
-        self.store_id = store_id
         self.file = os.path.join(server_dir, f'{store_type}.json')
         try:
             os.mkdir(server_dir)
@@ -97,11 +98,11 @@ class FileStorage(Storage):
         )
 
     def save(self):
-        self.logger.info('Saving entries')
+        self.logger.info('Saving %s for %s', self.store_type, self.store_id)
         if (
-            not self.__len__()
+            not self.data
             and os.path.isfile(self.file)
-            and os.path.getsize(self.file) <= 2
+            and os.path.getsize(self.file) >= 2
         ):
             self.logger.warning(
                 'Refusing to overwrite file "%s" with empty FileStorage',
@@ -111,7 +112,7 @@ class FileStorage(Storage):
 
         with open(self.file, 'w') as fh:
             json.dump(
-                self,
+                self.data,
                 fh,
                 indent=4,
                 separators=(',', ' : '),
