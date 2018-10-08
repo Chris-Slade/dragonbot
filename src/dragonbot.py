@@ -21,12 +21,13 @@ from insult import get_insult
 from keywords import Keywords
 from storage import storage_injector
 from util import split_command, command
+from wolfram_alpha import WolframAlpha
 import config
 import constants
 import insult as insult_module
 import util
 
-__version__ = '3.3.0'
+__version__ = '3.4.0'
 
 ### ARGUMENTS ###
 
@@ -44,6 +45,7 @@ def getopts():
         'read_only'        : 'DRAGONBOT_READ_ONLY',
         'storage_dir'      : 'DRAGONBOT_STORAGE_DIR',
         'token'            : 'DRAGONBOT_TOKEN',
+        'wolfram_app_id'   : 'DRAGONBOT_WOLFRAM_APP_ID',
     }
     defaults = {
         'global_log_level' : os.getenv(env_opts['global_log_level'], default='WARNING'),
@@ -57,6 +59,7 @@ def getopts():
         'read_only'    : os.environ.get(env_opts['read_only']) == 'True',
         'storage_dir'  : os.environ.get(env_opts['storage_dir']),
         'token'        : os.environ.get(env_opts['token']),
+        'wolfram_app_id' : os.environ.get(env_opts['wolfram_app_id']),
     }
 
     parser = argparse.ArgumentParser(description='Discord chat bot')
@@ -153,6 +156,11 @@ def getopts():
         '--version',
         action='store_true',
         help='Print the version of the bot and the discord.py API and exit.'
+    )
+    parser.add_argument(
+        '--wolfram-app-id',
+        type=str,
+        help='App ID for the Wolfram Alpha API.'
     )
     opts = parser.parse_args()
 
@@ -284,6 +292,8 @@ def init():
     emotes = Emotes()
     logger.info('Initializing Keywords module')
     keywords = Keywords()
+    logger.info('Initializing Wolfram Alpha module')
+    wolfram = WolframAlpha()
 
     # Set up command dispatcher
     assert config.owner_id is not None, 'No owner ID configured'
@@ -301,6 +311,7 @@ def init():
     cd.register("version", version_command)
     emotes.register_commands(cd)
     keywords.register_commands(cd)
+    wolfram.register_commands(cd)
     command_dispatcher = cd # Make global
 
     logger.debug(", ".join(cd.known_command_names()))
@@ -348,7 +359,7 @@ def help_message():
     ], [
         '{prefix}help `<section>`',
         'Show the help section for a submodule. Options are `emotes`'
-        ' and `keywords`.'
+        ' `keywords`, and `wolfram alpha`.'
     ], [
         '{prefix}config',
         'Show the current bot configuration. Owner only.'
@@ -417,6 +428,8 @@ async def show_help(_client, message):
         help_msg = Emotes.help()
     elif argstr.casefold() == 'keywords':
         help_msg = Keywords.help()
+    elif argstr.casefold() in ('wolfram', 'wolfram alpha'):
+        help_msg = WolframAlpha.help()
     else:
         await message.channel.send("I don't have help for that.")
     if isinstance(help_msg, discord.Embed):
@@ -441,7 +454,7 @@ async def show_config(_client, message):
     for name, val in sorted(vars(config).items()):
         if name.startswith('_'):
             continue
-        if name in ('token', 'mongodb_uri', 'mongo'):
+        if name in constants.SENSITIVE_CONFIG_VARS:
             val = '<hidden>'
         embed.add_field(name=name, value=val, inline=False)
     embed.set_footer(text=version())

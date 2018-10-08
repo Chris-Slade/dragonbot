@@ -19,6 +19,11 @@ EMBEDDABLE_IMAGE_SCHEMES = ('http', 'https')
 EMBEDDABLE_IMAGE_EXTS = (
     '.jpg', '.jpeg', '.gif', '.png', '.webp', '.bmp', '.tiff'
 )
+WOLFRAM_API_URL = 'http://api.wolframalpha.com'
+WOLFRAM_SIMPLE = '/v2/simple'
+WOLFRAM_SHORT = '/v1/result'
+# Config vars that shouldn't be shown
+SENSITIVE_CONFIG_VARS = ('token', 'mongodb_uri', 'wolfram_app_id')
 
 LOG_LEVELS = [ 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL' ]
 
