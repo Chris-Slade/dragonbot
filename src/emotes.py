@@ -2,7 +2,7 @@ import logging
 import re
 
 from insult import random_insult
-from storage import FileStorage, MongoStorage, KeyExistsError
+from storage import KeyExistsError
 from util import server_command_method
 import config
 import constants

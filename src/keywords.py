@@ -4,7 +4,6 @@ import logging
 import re
 
 from insult import random_insult
-from storage import FileStorage
 from util import command_method, server_command_method
 import config
 import constants

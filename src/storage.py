@@ -120,4 +120,61 @@ class FileStorage(Storage):
             )
 
 class MongoStorage(Storage):
-    pass
+    def __init__(self, store_type, store_id):
+        super().__init__(store_type, store_id)
+        self.db = config.mongo.get_default_database()
+        self.load()
+
+    def load(self):
+        collection = self.db[self.store_type]
+        stored = collection.find_one({ '_id' : self.store_id })
+        if stored is None:
+            self.logger.info('No document found for %s', self.store_id)
+            stored = collection.insert_one({
+                '_id' : self.store_id,
+                'values' : {}
+            })
+            self.logger.info('Created document with ID %s', stored.inserted_id)
+        else:
+            self.logger.info('Loaded document for %s', self.store_id)
+            if 'values' not in stored:
+                raise ValueError(f'Invalid document in database: {stored}');
+            self.clear()
+            self.update(stored['values'])
+            self.logger.info(
+                '[%d] Loaded %d %s(s) from database',
+                self.store_id,
+                len(self),
+                self.store_type
+            )
+
+    def save(self):
+        self.logger.info('Saving entries')
+        if not self.data:
+            self.logger.warning(
+                'Refusing to overwrite document with empty MongoStorage'
+            )
+            return
+        collection = self.db[self.store_type]
+        result = collection.update_one(
+            { '_id' : self.store_id },
+            { '$set': { 'values' : self.data } }
+        )
+        if result.matched_count == 0:
+            self.logger.warning(
+                'Failed to match document in %s with _id %s',
+                self.store_type,
+                self.store_id
+            )
+        if result.modified_count == 0:
+            self.logger.warning(
+                'Failed to update document in %s with _id %s',
+                self.store_type,
+                self.store_id
+            )
+        else:
+            self.logger.info(
+                'Updated document in %s with _id %s',
+                self.store_type,
+                self.store_id
+            )

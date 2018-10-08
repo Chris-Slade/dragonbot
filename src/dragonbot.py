@@ -7,12 +7,12 @@ import datetime
 import discord
 import json
 import logging
-import motor
 import os
 import signal
 import sys
 import time
 
+from pymongo import MongoClient
 from urllib.error import URLError
 
 from command_dispatcher import CommandDispatcher
@@ -272,7 +272,7 @@ def init():
     # Otherwise initialize a Mongo client
     elif config.mongodb_uri:
         logger.info('Initializing Mongo client')
-        config.mongo = motor.motor_asyncio.AsyncIOMotorClient(config.mongodb_uri)
+        config.mongo = MongoClient(config.mongodb_uri)
 
         def mongo_cleanup():
             logger.info('Closing MongoDB connection(s)')
@@ -425,7 +425,7 @@ async def show_config(_client, message):
     for name, val in sorted(vars(config).items()):
         if name.startswith('_'):
             continue
-        if name == 'token':
+        if name in ('token', 'mongodb_uri', 'mongo'):
             val = '<hidden>'
         embed.add_field(name=name, value=val, inline=False)
     embed.set_footer(text=version())
