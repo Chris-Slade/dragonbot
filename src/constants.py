@@ -12,6 +12,13 @@ EMOTE_PREFIX = '@'
 DEFAULT_INSULT = 'you dummy'
 # Default color for embeds created by the bot
 EMBED_COLOR = 0xFF00FF
+# Allowed schemes for image URLs.
+# See https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
+EMBEDDABLE_IMAGE_SCHEMES = ('http', 'https')
+# Image extensions recognized by Discord
+EMBEDDABLE_IMAGE_EXTS = (
+    '.jpg', '.jpeg', '.gif', '.png', '.webp', '.bmp', '.tiff'
+)
 
 LOG_LEVELS = [ 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL' ]
 

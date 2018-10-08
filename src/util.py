@@ -108,8 +108,8 @@ def create_help_embed(title, description, help_msgs):
         )
     return embed
 
-def validate_url(string):
-    parsed = urllib.parse.urlparse(string)
-    if parsed.scheme and parsed.netloc and parsed.path:
-        return parsed.geturl()
-    return None
+def is_embeddable_image_url(string):
+    parse = urllib.parse.urlparse(string)
+    return parse.scheme and parse.netloc and parse.path \
+        and parse.scheme in constants.EMBEDDABLE_IMAGE_SCHEMES \
+        and any(parse.path.endswith(ext) for ext in constants.EMBEDDABLE_IMAGE_EXTS)

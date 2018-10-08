@@ -46,9 +46,14 @@ class TestUtil(unittest.TestCase):
     def test_td_str(self):
         self.assertEqual(util.td_str(12345), '3:25:45')
 
-    def test_is_valid_url(self):
-        self.assertIsNotNone(util.validate_url('https://example.com/?foo=bar'))
-        self.assertIsNone(util.validate_url('invalid'))
+    def test_is_embeddable_image_url(self):
+        # pylint: disable=unnecessary-lambda
+        t = lambda s: util.is_embeddable_image_url(s)
+        self.assertTrue(t('https://example.com/image.png'))
+        self.assertFalse(t('https://example.com/'))
+        self.assertFalse(t('https://example.com/file.txt'))
+        self.assertFalse(t('ftp://example.com/image.png'))
+        self.assertFalse(t('invalid'))
 
 if __name__ == "__main__":
     unittest.main()
