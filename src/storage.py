@@ -11,12 +11,21 @@ class KeyExistsError(RuntimeError):
 def _normalize_key(key):
     return key.strip().casefold()
 
+def storage_injector(store_type, store_id):
+    storage_args = { 'store_type' : store_type, 'store_id' : store_id }
+    if config.storage_dir:
+        return FileStorage(**storage_args)
+    if config.mongodb_uri:
+        return MongoStorage(**storage_args)
+    return None
+
 class Storage(ABC, dict):
     """A subclass of dict with additional methods for storing and
     retrieving the mappings to and from JSON files, respectively.
     """
 
-    def __init__(self, _store_type, _store_id):
+    # pylint: disable=unused-argument
+    def __init__(self, store_type, store_id):
         super().__init__()
         self.logger = logging.getLogger('dragonbot.' + __name__)
         atexit.register(self.save)
@@ -62,12 +71,13 @@ class FileStorage(Storage):
             config.storage_dir,
             str(store_id)
         )
-        server_file = os.path.join(server_dir, f'{store_type}.json')
+        self.store_type = store_type
+        self.store_id = store_id
+        self.file = os.path.join(server_dir, f'{store_type}.json')
         try:
             os.mkdir(server_dir)
         except FileExistsError:
             pass
-        self.file = server_file
         self.load()
 
     def load(self):
@@ -78,7 +88,13 @@ class FileStorage(Storage):
         with open(self.file, 'r', encoding='utf-8') as fh:
             self.clear()
             self.update(json.load(fh)) # Add all entries from file
-        self.logger.info('Loaded entries from "%s"', self.file)
+        self.logger.info(
+            '[%d] Loaded %d %s(s) from "%s"',
+            self.store_id,
+            len(self),
+            self.store_type,
+            self.file
+        )
 
     def save(self):
         self.logger.info('Saving entries')

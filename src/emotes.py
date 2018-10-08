@@ -2,7 +2,7 @@ import logging
 import re
 
 from insult import random_insult
-from storage import FileStorage, KeyExistsError
+from storage import FileStorage, MongoStorage, KeyExistsError
 from util import server_command_method
 import config
 import constants
@@ -18,20 +18,9 @@ class Emotes():
     def __len__(self):
         return self.emotes.__len__()
 
-    def add_server(self, server):
+    def add_server(self, server, storage):
         """Track emotes for a server."""
-        if config.storage_dir:
-            self.emotes[server.id] = FileStorage(
-                store_type='emotes',
-                store_id=server.id
-            )
-            self.logger.info(
-                '[%s] Loaded %d emote(s) from disk',
-                server,
-                len(self.emotes[server.id])
-            )
-        elif config.mongodb_uri:
-            pass # TODO
+        self.emotes[server.id] = storage
 
     @staticmethod
     def help():

@@ -7,6 +7,7 @@ import datetime
 import discord
 import json
 import logging
+import motor
 import os
 import signal
 import sys
@@ -18,6 +19,7 @@ from command_dispatcher import CommandDispatcher
 from emotes import Emotes
 from insult import get_insult
 from keywords import Keywords
+from storage import storage_injector
 from util import split_command, command
 import config
 import constants
@@ -267,6 +269,15 @@ def init():
     if config.storage_dir:
         logger.info('Creating storage directory %s', config.storage_dir)
         os.makedirs(config.storage_dir, exist_ok=True)
+    # Otherwise initialize a Mongo client
+    elif config.mongodb_uri:
+        logger.info('Initializing Mongo client')
+        config.mongo = motor.motor_asyncio.AsyncIOMotorClient(config.mongodb_uri)
+
+        def mongo_cleanup():
+            logger.info('Closing MongoDB connection(s)')
+            config.mongo.close()
+        atexit.register(mongo_cleanup)
 
     # Initialize emote and keyword modules
     logger.info('Initializing Emotes module')
@@ -579,8 +590,8 @@ async def on_ready():
         ):
             await server.default_channel.send(version())
 
-        emotes.add_server(server)
-        keywords.add_server(server)
+        emotes.add_server(server, storage_injector('emotes', server.id))
+        keywords.add_server(server, storage_injector('keywords', server.id))
 
     if config.presence is not None:
         presence = config.presence
@@ -594,6 +605,13 @@ async def on_ready():
                 await client.change_presence(activity=game)
                 logger.info('Set current game to %s', str(game))
         # TODO: Support other presence options (status, AFK)
+
+@client.event
+async def on_guild_join(server):
+    global emotes, keywords, logger
+    logger.info('Initializing storage for new server "%s"', server)
+    emotes.add_server(server, storage_injector('emotes', server.id))
+    keywords.add_server(server, storage_injector('keywords', server.id))
 
 @client.event
 async def on_message(message):

@@ -1,7 +1,6 @@
 import ahocorasick
 import discord
 import logging
-import os
 import re
 
 from insult import random_insult
@@ -22,20 +21,9 @@ class Keywords():
     def __len__(self):
         return self.keywords.__len__()
 
-    def add_server(self, server):
+    def add_server(self, server, storage):
         """Track emotes for a server."""
-        if config.storage_dir:
-            self.keywords[server.id] = FileStorage(
-                store_type='keywords',
-                store_id=server.id
-            )
-            self.logger.info(
-                '[%s] Loaded %d keyword(s) from disk',
-                server,
-                len(self.keywords[server.id])
-            )
-        elif config.mongodb_uri:
-            pass
+        self.keywords[server.id] = storage
         self.update_automaton(server)
 
     @staticmethod
