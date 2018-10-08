@@ -1,11 +1,9 @@
 import ahocorasick
 import discord
 import logging
-import os
 import re
 
 from insult import random_insult
-from storage import Storage
 from util import command_method, server_command_method
 import config
 import constants
@@ -22,22 +20,9 @@ class Keywords():
     def __len__(self):
         return self.keywords.__len__()
 
-    def add_server(self, server, storage_dir):
+    def add_server(self, server, storage):
         """Track emotes for a server."""
-        server_dir = os.path.join(
-            storage_dir,
-            '{}-{}'.format(util.normalize_path(server.name), server.id)
-        )
-        try:
-            os.mkdir(server_dir)
-        except FileExistsError:
-            pass
-        self.keywords[server.id] = Storage(os.path.join(server_dir, 'keywords.json'))
-        self.logger.info(
-            '[%s] Loaded %d keyword(s) from disk',
-            server,
-            len(self.keywords[server.id])
-        )
+        self.keywords[server.id] = storage
         self.update_automaton(server)
 
     @staticmethod
@@ -61,6 +46,9 @@ Keywords:
 
   {prefix}deletekeyword
     Alias for `removekeyword`.
+
+  {prefix}refreshkeywords
+    (Owner only.) Reload the keywords for the current server.
 
   {prefix}removekeyword <keyword>
     Remove a keyword. WARNING: This removes a keyword with its count and
@@ -207,10 +195,11 @@ Keywords:
 
     @server_command_method
     async def refresh_keywords(self, _client, message):
-        # FIXME
-        await message.channel.send('Command disabled.')
-        # self.keywords.load(self.keywords_file)
-        # await message.channel.send('Keywords refreshed!')
+        if hasattr(message, 'guild'):
+            self.keywords[message.channel.guild.id].load()
+            await message.channel.send('Keywords refreshed!')
+        else:
+            await message.channel.send('You must be in a server to do that.')
 
     @server_command_method
     async def list_keywords(self, _client, message):

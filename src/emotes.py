@@ -1,9 +1,8 @@
 import logging
-import os
 import re
 
 from insult import random_insult
-from storage import Storage, KeyExistsError
+from storage import KeyExistsError
 from util import server_command_method
 import config
 import constants
@@ -19,23 +18,9 @@ class Emotes():
     def __len__(self):
         return self.emotes.__len__()
 
-    def add_server(self, server, storage_dir):
+    def add_server(self, server, storage):
         """Track emotes for a server."""
-        self.storage_dir = storage_dir
-        server_dir = os.path.join(
-            storage_dir,
-            '{}-{}'.format(util.normalize_path(server.name), server.id)
-        )
-        try:
-            os.mkdir(server_dir)
-        except FileExistsError:
-            pass
-        self.emotes[server.id] = Storage(os.path.join(server_dir, 'emotes.json'))
-        self.logger.info(
-            '[%s] Loaded %d emote(s) from disk',
-            server,
-            len(self.emotes[server.id])
-        )
+        self.emotes[server.id] = storage
 
     @staticmethod
     def help():
@@ -57,6 +42,9 @@ Emotes:
 
   {prefix}emotes
     Show a list of known emotes.
+
+  {prefix}refreshemotes
+    (Owner only.) Reload the emotes for the current server.
 
   {prefix}removeemote <emote name>
     Remove an emote.
@@ -98,7 +86,7 @@ Emotes:
         except Exception as e:
             self.logger.info('Failed to parse !addcommand', exc_info=e)
             await message.channel.send(
-                'Give me a name and a URL, {}.'.format(random_insult())
+                'Give me a name and a value, {}.'.format(random_insult())
             )
             return
 
@@ -146,10 +134,11 @@ Emotes:
 
     @server_command_method
     async def refresh_emotes(self, _client, message):
-        # FIXME
-        await message.channel.send('Command disabled.')
-        # self.emotes.load(self.emotes_file)
-        # await message.channel.send('Emotes refreshed!')
+        if hasattr(message, 'guild'):
+            self.emotes[message.channel.guild.id].load()
+            await message.channel.send('Emotes refreshed!')
+        else:
+            await message.channel.send('You must be in a server to do that.')
 
     @server_command_method
     async def list_emotes(self, _client, message):
