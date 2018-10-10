@@ -1,3 +1,6 @@
+import aiohttp
+import atexit
+import config
 import constants
 import discord
 import functools
@@ -113,3 +116,23 @@ def is_embeddable_image_url(string):
     return parse.scheme and parse.netloc and parse.path \
         and parse.scheme in constants.EMBEDDABLE_IMAGE_SCHEMES \
         and any(parse.path.endswith(ext) for ext in constants.EMBEDDABLE_IMAGE_EXTS)
+
+def log_http_error(logger, response):
+    """Log an error from an HTTP request made with aiohttp."""
+    logger.warning(
+        'Error making %s request on %s: %s - %s',
+        response.method,
+        response.url,
+        response.status,
+        response.url
+    )
+
+async def get_http_client():
+    if not hasattr(config, 'http_client'):
+        config.http_client = aiohttp.ClientSession()
+        def close_http_client():
+            if hasattr(config, 'http_client') and not config.http_client.closed:
+                logging.info('Closing aiohttp ClientSession')
+                config.http_client.close()
+        atexit.register(close_http_client)
+    return config.http_client

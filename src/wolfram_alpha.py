@@ -1,4 +1,5 @@
 import discord
+import io
 import logging
 import urllib
 
@@ -42,22 +43,22 @@ class WolframAlpha():
     async def wolfram_alpha(self, _client, message):
         _command, arg = util.split_command(message)
         try:
-            url = await self.make_request(arg, constants.WOLFRAM_SIMPLE)
-            self.logger.debug('GET %s', url)
-            sent = await message.channel.send('Working on it…')
-            rsp = urllib.request.urlopen(url)
-            image = discord.File(fp=rsp, filename='query.png')
-            await message.channel.send(file=image)
-            await sent.delete()
-        except urllib.error.HTTPError as e:
-            if e.code == 501:
-                await message.channel.send(
-                    'Wolfram Alpha could not understand your query.'
-                )
-            elif e.code == 400:
-                await message.channel.send('Invalid input.')
-            self.logger.exception('Error from Wolfram Alpha API')
-        except:
+            async with message.channel.typing():
+                url    = await self.make_request(arg, constants.WOLFRAM_SIMPLE)
+                client = await util.get_http_client()
+                rsp    = await client.get(url)
+                if rsp.status == 501:
+                    util.log_http_error(self.logger, rsp)
+                    await message.channel.send(
+                        'Wolfram Alpha could not understand your query.'
+                    )
+                elif rsp.status == 400:
+                    util.log_http_error(self.logger, rsp)
+                    await message.channel.send('Invalid input.')
+                fp = io.BytesIO(await rsp.read())
+                image = discord.File(fp=fp, filename='query.png')
+                await message.channel.send(file=image)
+        except Exception:
             self.logger.exception('Unknown error')
             await message.channel.send('Unknown error.')
 
@@ -67,17 +68,18 @@ class WolframAlpha():
         if arg is None:
             await message.channel.send('What is your question?')
         try:
-            url = await self.make_request(arg, constants.WOLFRAM_SHORT)
-            self.logger.debug('GET %s', url)
-            rsp = urllib.request.urlopen(url)
-            await message.channel.send(rsp.read().decode('utf8'))
-        except urllib.error.HTTPError as e:
-            if e.code == 501:
-                await message.channel.send("I don't know how to answer that.")
-            elif e.code == 400:
-                await message.channel.send('Invalid input.')
-            self.logger.exception('Error from Wolfram Alpha API')
-        except:
+            async with message.channel.typing():
+                url    = await self.make_request(arg, constants.WOLFRAM_SHORT)
+                client = await util.get_http_client()
+                rsp    = await client.get(url)
+                if rsp.status == 501:
+                    util.log_http_error(self.logger, rsp)
+                    await message.channel.send("I don't know how to answer that.")
+                elif rsp.status == 400:
+                    util.log_http_error(self.logger, rsp)
+                    await message.channel.send('Invalid input.')
+                await message.channel.send(rsp.text())
+        except Exception:
             self.logger.exception('Unknown error')
             await message.channel.send('Unknown error.')
 
