@@ -13,7 +13,6 @@ import sys
 import time
 
 from pymongo import MongoClient
-from urllib.error import URLError
 
 from command_dispatcher import CommandDispatcher
 from emotes import Emotes
@@ -24,10 +23,9 @@ from util import split_command, command
 from wolfram_alpha import WolframAlpha
 import config
 import constants
-import insult as insult_module
 import util
 
-__version__ = '3.5.0'
+__version__ = '3.5.1'
 
 ### ARGUMENTS ###
 
@@ -515,16 +513,21 @@ async def say(client, message):
 async def insult(_client, message):
     """Handles the !insult commmand."""
     _command, name = split_command(message)
+    if not name or len(message.mentions) > 1:
+        # Insult people who mess up the command
+        name = message.author.name
+    elif len(message.mentions) == 1:
+        # We want to use the insultee's display name, not a mention string
+        name = message.mentions[0].display_name
     try:
-        insult = get_insult(rate_limit=1.5)
-        if not (insult.startswith("I ") or insult.startswith("I'm ")):
-            insult = insult[0].lower() + insult[1:]
-        await message.channel.send("{}, {}".format(name, insult))
-    except insult_module.RateLimited:
-        await message.channel.send('Requests are being sent too quickly.')
-    except URLError as e:
+        insult = await get_insult(who=name)
+        if not insult:
+            await message.channel.send('Error retrieving insult')
+        else:
+            await message.channel.send(insult)
+    except Exception:
         await message.channel.send('Error retrieving insult from server.')
-        logger.warning('Error retrieving insult from server: %s', str(e))
+        logger.exception('Error retrieving insult from server')
 
 @command
 async def set_current_game(client, message):

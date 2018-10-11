@@ -22,6 +22,7 @@ EMBEDDABLE_IMAGE_EXTS = (
 WOLFRAM_API_URL = 'http://api.wolframalpha.com'
 WOLFRAM_SIMPLE = '/v2/simple'
 WOLFRAM_SHORT = '/v1/result'
+INSULT_API_URL = 'https://insult.mattbas.org/api/insult'
 # Config vars that shouldn't be shown
 SENSITIVE_CONFIG_VARS = ('token', 'mongodb_uri', 'wolfram_app_id')
 
