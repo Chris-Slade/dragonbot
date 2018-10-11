@@ -55,9 +55,10 @@ class WolframAlpha():
                 elif rsp.status == 400:
                     util.log_http_error(self.logger, rsp)
                     await message.channel.send('Invalid input.')
-                fp = io.BytesIO(await rsp.read())
-                image = discord.File(fp=fp, filename='query.png')
-                await message.channel.send(file=image)
+                else:
+                    fp = io.BytesIO(await rsp.read())
+                    image = discord.File(fp=fp, filename='query.png')
+                    await message.channel.send(file=image)
         except Exception:
             self.logger.exception('Unknown error')
             await message.channel.send('Unknown error.')
@@ -74,11 +75,18 @@ class WolframAlpha():
                 rsp    = await client.get(url)
                 if rsp.status == 501:
                     util.log_http_error(self.logger, rsp)
-                    await message.channel.send("I don't know how to answer that.")
+                    text = await rsp.text()
+                    if text:
+                        await message.channel.send(text)
+                    else:
+                        await message.channel.send(
+                            "I don't know how to answer that."
+                        )
                 elif rsp.status == 400:
                     util.log_http_error(self.logger, rsp)
                     await message.channel.send('Invalid input.')
-                await message.channel.send(await rsp.text())
+                else:
+                    await message.channel.send(await rsp.text())
         except Exception:
             self.logger.exception('Unknown error')
             await message.channel.send('Unknown error.')
