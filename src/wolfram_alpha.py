@@ -78,7 +78,7 @@ class WolframAlpha():
                 elif rsp.status == 400:
                     util.log_http_error(self.logger, rsp)
                     await message.channel.send('Invalid input.')
-                await message.channel.send(rsp.text())
+                await message.channel.send(await rsp.text())
         except Exception:
             self.logger.exception('Unknown error')
             await message.channel.send('Unknown error.')
