@@ -25,7 +25,7 @@ import config
 import constants
 import util
 
-__version__ = '3.5.5'
+__version__ = '3.5.6'
 
 ### ARGUMENTS ###
 

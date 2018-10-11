@@ -1,3 +1,4 @@
+import aiohttp
 import discord
 import io
 import logging
@@ -73,9 +74,12 @@ class WolframAlpha():
                 url    = await self.make_request(arg, constants.WOLFRAM_SHORT)
                 client = await util.get_http_client()
                 rsp    = await client.get(url)
+                text   = await rsp.text()
+                if text:
+                    text = text.replace('Wolfram|Alpha', 'DragonBot')
+                    text = text.replace('Wolfram Alpha', 'DragonBot')
                 if rsp.status == 501:
                     util.log_http_error(self.logger, rsp)
-                    text = await rsp.text()
                     if text:
                         await message.channel.send(text)
                     else:
@@ -86,7 +90,10 @@ class WolframAlpha():
                     util.log_http_error(self.logger, rsp)
                     await message.channel.send('Invalid input.')
                 else:
-                    await message.channel.send(await rsp.text())
+                    await message.channel.send(text)
+        except aiohttp.ClientResponseError:
+            self.logger.exception('Error reading response body')
+            await message.channel.send('Error getting response')
         except Exception:
             self.logger.exception('Unknown error')
             await message.channel.send('Unknown error.')
