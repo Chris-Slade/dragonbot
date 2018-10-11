@@ -43,7 +43,14 @@ def split_command(message):
 
     E.g., split_command("!test foo bar") will return ("!test", "foo bar").
     """
-    split = message.content[1:].split(maxsplit=1)
+    return _split_command_helper(message.content)
+
+def split_command_clean(message):
+    """Split a command message, using the clean content."""
+    return _split_command_helper(message.clean_content)
+
+def _split_command_helper(content):
+    split = content[1:].split(maxsplit=1)
     command = split[0] if len(split) >= 1 else None
     argstr  = split[1] if len(split) >= 2 else None
     return command, argstr

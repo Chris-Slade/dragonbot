@@ -19,13 +19,13 @@ from emotes import Emotes
 from insult import get_insult
 from keywords import Keywords
 from storage import storage_injector
-from util import split_command, command
+from util import split_command, split_command_clean, command
 from wolfram_alpha import WolframAlpha
 import config
 import constants
 import util
 
-__version__ = '3.5.2'
+__version__ = '3.5.3'
 
 ### ARGUMENTS ###
 
@@ -511,14 +511,25 @@ async def say(client, message):
 
 @command
 async def insult(_client, message):
-    """Handles the !insult commmand."""
-    _command, name = split_command(message)
-    if not name or len(message.mentions) > 1:
-        # Insult people who mess up the command
-        name = message.author.name
-    elif len(message.mentions) == 1:
+    """Handles the !insult commmand.
+
+    If the command message has a single user or role mention, the name of that
+    user or role is used in the insult. If no one is mentioned but a string is
+    provided, that string will be insulted. Otherwise, the user who invoked the
+    command will be insulted.
+    """
+    _command, name = split_command_clean(message)
+    mentions       = len(message.mentions)
+    role_mentions  = len(message.role_mentions)
+    if mentions == 1 and role_mentions == 0:
         # We want to use the insultee's display name, not a mention string
         name = message.mentions[0].display_name
+    elif role_mentions == 1 and mentions == 0:
+        name = message.role_mentions[0].name
+    if not name or (mentions + role_mentions) > 1:
+        name = None
+    logger.info('Insult: name is %s', name)
+
     try:
         insult = await get_insult(who=name)
         if not insult:
