@@ -138,8 +138,12 @@ async def get_http_client():
     if not hasattr(config, 'http_client'):
         config.http_client = aiohttp.ClientSession()
         def close_http_client():
-            if hasattr(config, 'http_client') and not config.http_client.closed:
-                logging.info('Closing aiohttp ClientSession')
-                config.http_client.close()
+            if (
+                hasattr(config, 'http_client')
+                and hasattr(config.http_client, 'close')
+                and not config.http_client.closed
+            ):
+                logging.info('Closing aiohttp ClientSession (FIXME)')
+                # config.http_client.close()
         atexit.register(close_http_client)
     return config.http_client
