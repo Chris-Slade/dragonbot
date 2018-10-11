@@ -151,7 +151,7 @@ class Keywords():
             return
         try:
             name, emote = argstr.split(maxsplit=1)
-        except:
+        except Exception:
             # If we just have a name, add it as a keyword with no reaction.
             server_keywords[argstr] = { 'reactions' : [], 'count' : 0 }
             self.update_automaton(message.guild)
