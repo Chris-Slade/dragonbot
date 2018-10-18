@@ -356,7 +356,7 @@ def help_message():
         'Show this help message.'
     ], [
         '{prefix}help `<section>`',
-        'Show the help section for a submodule. Options are `emotes`'
+        'Show the help section for a submodule. Options are `emotes`,'
         ' `keywords`, and `wolfram alpha`.'
     ], [
         '{prefix}config',
