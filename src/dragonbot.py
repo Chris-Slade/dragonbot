@@ -25,7 +25,7 @@ import config
 import constants
 import util
 
-__version__ = '3.5.6'
+__version__ = '3.6.0'
 
 ### ARGUMENTS ###
 
@@ -43,6 +43,7 @@ def getopts():
         'read_only'        : 'DRAGONBOT_READ_ONLY',
         'storage_dir'      : 'DRAGONBOT_STORAGE_DIR',
         'token'            : 'DRAGONBOT_TOKEN',
+        'unknown_cmd_msg'  : 'DRAGONBOT_UNKNOWN_CMD_MSG',
         'wolfram_app_id'   : 'DRAGONBOT_WOLFRAM_APP_ID',
     }
     defaults = {
@@ -57,6 +58,7 @@ def getopts():
         'read_only'    : os.environ.get(env_opts['read_only']) == 'True',
         'storage_dir'  : os.environ.get(env_opts['storage_dir']),
         'token'        : os.environ.get(env_opts['token']),
+        'unknown_cmd_msg' : os.environ.get(env_opts['unknown_cmd_msg']) == 'True',
         'wolfram_app_id' : os.environ.get(env_opts['wolfram_app_id']),
     }
 
@@ -149,6 +151,18 @@ def getopts():
         type=str,
         help='The authentication token to use for this bot. Required.'
             ' Environment variable: ' + env_opts['token']
+    )
+    parser.add_argument(
+        '--unknown-cmd-msg',
+        action='store_true',
+        help='Tell the bot to send a message when it sees a command it does not'
+            ' know. Generally discouraged for Discord bots.'
+    )
+    parser.add_argument(
+        '--no-unknown-cmd-msg',
+        action='store_false',
+        help='Tell the bot not to send a message when it sees a command it does'
+            ' not know.'
     )
     parser.add_argument(
         '--version',
@@ -699,7 +713,11 @@ async def on_message(message):
             CommandDispatcher.WriteDenied,
             CommandDispatcher.UnknownCommand
         ) as e:
-            await message.channel.send(str(e))
+            if (
+                e.__class__ != CommandDispatcher.UnknownCommand
+                or config.unknown_cmd_msg
+            ):
+                await message.channel.send(str(e))
             logger.info(
                 '[%s] Exception executing command "%s" from %s: %s',
                 message.guild,
