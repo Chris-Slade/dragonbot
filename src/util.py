@@ -72,6 +72,20 @@ def command(command):
         await command(client, message)
     return wrapper
 
+def server_command(command):
+    """Only allow this command in a server, not PMs."""
+    @functools.wraps(command)
+    async def wrapper(client,  message):
+        assert client is not None, 'Got None for client'
+        assert message is not None, 'Got None for message'
+        if not hasattr(message, 'guild') or message.guild is None:
+            await message.channel.send(
+                'This command can only be used in a server context.'
+            )
+        else:
+            await command(client, message)
+    return wrapper
+
 def command_method(command):
     """Perform actions that should be done every time a command is invoked."""
     @functools.wraps(command)
