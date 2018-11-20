@@ -5,6 +5,7 @@ import codecs
 import collections
 import datetime
 import discord
+import io
 import json
 import logging
 import os
@@ -19,13 +20,13 @@ from emotes import Emotes
 from insult import get_insult
 from keywords import Keywords
 from storage import storage_injector
-from util import split_command, split_command_clean, command
+from util import split_command, split_command_clean, command, server_command
 from wolfram_alpha import WolframAlpha
 import config
 import constants
 import util
 
-__version__ = '3.6.0'
+__version__ = '3.7.0'
 
 ### ARGUMENTS ###
 
@@ -311,6 +312,7 @@ def init():
     assert config.owner_id is not None, 'No owner ID configured'
     owner_only = { int(config.owner_id) } # For registering commands as owner-only
     cd = CommandDispatcher(read_only=config.read_only)
+    cd.register("addemoji", add_emoji, may_use=owner_only)
     cd.register("config", show_config, may_use=owner_only)
     cd.register("help", show_help)
     cd.register("insult", insult)
@@ -372,6 +374,10 @@ def help_message():
         '{prefix}help `<section>`',
         'Show the help section for a submodule. Options are `emotes`'
         ' `keywords`, and `wolfram alpha`.'
+    ], [
+        '{prefix}addemoji <name> <file or URL>',
+        'Add a custom emoji to the Guild. Requires the edit-emoji permission.'
+        ' Owner only.'
     ], [
         '{prefix}config',
         'Show the current bot configuration. Owner only.'
@@ -571,6 +577,43 @@ async def set_current_game(client, message):
         await message.channel.send('Changed presence.')
     except discord.InvalidArgument:
         await message.channel.send('Error changing presence.')
+
+@server_command
+async def add_emoji(_client, message):
+    _command, args = split_command(message)
+    fp   = None
+    name = None
+    try:
+        name, image_url = args.rsplit(maxsplit=1)
+        client = await util.get_http_client()
+        rsp    = await client.get(image_url)
+        if rsp.status != 200:
+            await message.channel.send('Error retrieving file from URL')
+            return
+        # Get file from URL
+        fp = io.BytesIO(await rsp.read())
+    except ValueError:
+        if not message.attachments:
+            await message.channel.send('Invalid syntax: need a name and a file.')
+            return
+        name = args
+        # Handle attached file
+        fp = io.BytesIO()
+        await message.attachments[0].save(fp=fp)
+    try:
+        await message.guild.create_custom_emoji(name=name, image=fp.getvalue())
+    except discord.Forbidden:
+        await message.channel.send("I don't have permission to do that here.")
+        logger.exception('Error creating custom emoji')
+        return
+    except discord.HTTPException as e:
+        await message.channel.send(
+            'An error occurred when attempting to upload the emoji: '
+                + e.text if e.text != "" else 'Reason unknown.'
+        )
+        logger.exception('Error creating custom emoji')
+        return
+    await message.channel.send('Emoji created!')
 
 @command
 async def purge(_client, message):
