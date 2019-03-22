@@ -13,4 +13,4 @@ prospector = {version = "*", extras = ["with_vulture"]}
 mockito = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.7.2"
