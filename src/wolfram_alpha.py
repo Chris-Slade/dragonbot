@@ -69,6 +69,7 @@ class WolframAlpha():
         _command, arg = util.split_command(message)
         if arg is None:
             await message.channel.send('What is your question?')
+            return
         try:
             async with message.channel.typing():
                 url    = await self.make_request(arg, constants.WOLFRAM_SHORT)
