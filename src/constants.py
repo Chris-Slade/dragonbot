@@ -12,6 +12,8 @@ EMOTE_PREFIX = '@'
 DEFAULT_INSULT = 'you dummy'
 # Default color for embeds created by the bot
 EMBED_COLOR = 0xFF00FF
+# Maximum size for an embed description
+MAX_EMBED_DESC_SIZE = 2048
 # Allowed schemes for image URLs.
 # See https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
 EMBEDDABLE_IMAGE_SCHEMES = ('http', 'https')
@@ -22,6 +24,7 @@ EMBEDDABLE_IMAGE_EXTS = (
 WOLFRAM_API_URL = 'http://api.wolframalpha.com'
 WOLFRAM_SIMPLE = '/v2/simple'
 WOLFRAM_SHORT = '/v1/result'
+WIKIPEDIA_API_URL = 'https://en.wikipedia.org/w/api.php'
 INSULT_API_URL = 'https://insult.mattbas.org/api/insult'
 # Config vars that shouldn't be shown
 SENSITIVE_CONFIG_VARS = ('token', 'mongodb_uri', 'wolfram_app_id')

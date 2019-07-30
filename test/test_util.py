@@ -27,6 +27,12 @@ class TestUtil(unittest.TestCase):
         msg.content = '!test foo bar'
         self.assertEqual(util.split_command(msg), ('test', 'foo bar'))
 
+    def test_truncate(self):
+        self.assertEqual(
+            util.truncate('abcdefghijklmnopqrstuvwxyz', 5),
+            'abcd…'
+        )
+
     def test_is_get(self):
         self.assertTrue(util.is_get(123))
         self.assertTrue(util.is_get(12345))

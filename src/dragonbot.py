@@ -21,12 +21,13 @@ from insult import get_insult
 from keywords import Keywords
 from storage import storage_injector
 from util import split_command, split_command_clean, command, server_command
+from wikipedia import Wikipedia
 from wolfram_alpha import WolframAlpha
 import config
 import constants
 import util
 
-__version__ = '3.7.1'
+__version__ = '3.8.0'
 
 ### ARGUMENTS ###
 
@@ -307,6 +308,8 @@ def init():
     keywords = Keywords()
     logger.info('Initializing Wolfram Alpha module')
     wolfram = WolframAlpha()
+    logger.info('Initializing Wikipedia module')
+    wikipedia = Wikipedia()
 
     # Set up command dispatcher
     assert config.owner_id is not None, 'No owner ID configured'
@@ -325,6 +328,7 @@ def init():
     cd.register("version", version_command)
     emotes.register_commands(cd)
     keywords.register_commands(cd)
+    wikipedia.register_commands(cd)
     wolfram.register_commands(cd)
     command_dispatcher = cd # Make global
 
@@ -448,6 +452,8 @@ async def show_help(_client, message):
         help_msg = Keywords.help()
     elif argstr.casefold() in ('wolfram', 'wolfram alpha'):
         help_msg = WolframAlpha.help()
+    elif argstr.casefold() in ('wiki', 'wikipedia'):
+        help_msg = Wikipedia.help()
     else:
         await message.channel.send("I don't have help for that.")
     if isinstance(help_msg, discord.Embed):

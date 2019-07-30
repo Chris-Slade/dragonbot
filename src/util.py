@@ -15,6 +15,9 @@ from datetime import datetime, timedelta
 def chunker(seq, size):
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
+def truncate(string, max_size):
+    return string if len(string) < max_size else string[:max_size - 1] + '…'
+
 def get_log_level(level_str):
     try:
         level = getattr(logging, level_str)
