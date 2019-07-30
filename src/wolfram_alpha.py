@@ -32,10 +32,10 @@ class WolframAlpha():
             description='This module allows you to make queries using Wolfram'
                 ' Alpha.',
             help_msgs=[ [
-                '{prefix}wolfram',
+                '{prefix}wolfram <query>',
                 'Make a query using Wolfram Alpha.'
             ], [
-                '{prefix}ask',
+                '{prefix}ask <question>',
                 'Ask a question, get a simple answer.'
             ] ]
         )
