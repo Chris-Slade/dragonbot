@@ -46,7 +46,6 @@ class Wikipedia():
                     await message.channel.send('An error occurred.')
                 else:
                     json = await rsp.json()
-                    self.logger.info('json is %s', json)
                     if (
                         'query' not in json
                         or 'pages' not in json['query']
