@@ -14,6 +14,10 @@ DEFAULT_INSULT = 'you dummy'
 EMBED_COLOR = 0xFF00FF
 # Maximum size for an embed description
 MAX_EMBED_DESC_SIZE = 2048
+# Maximum number of dice rolls
+MAX_DICE_ROLLS = 100
+# Maximum number of sides a die can have
+MAX_DIE_SIDES = 1000000
 # Allowed schemes for image URLs.
 # See https://discordapp.com/developers/docs/resources/channel#embed-object-embed-image-structure
 EMBEDDABLE_IMAGE_SCHEMES = ('http', 'https')

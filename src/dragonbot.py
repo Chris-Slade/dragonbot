@@ -16,6 +16,7 @@ import time
 from pymongo import MongoClient
 
 from command_dispatcher import CommandDispatcher
+from dice import Dice
 from emotes import Emotes
 from insult import get_insult
 from keywords import Keywords
@@ -27,7 +28,7 @@ import config
 import constants
 import util
 
-__version__ = '3.8.0'
+__version__ = '3.9.0'
 
 ### ARGUMENTS ###
 
@@ -301,7 +302,9 @@ def init():
             config.mongo.close()
         atexit.register(mongo_cleanup)
 
-    # Initialize emote and keyword modules
+    # Initialize modules
+    logger.info('Initializing Dice module')
+    dice = Dice()
     logger.info('Initializing Emotes module')
     emotes = Emotes()
     logger.info('Initializing Keywords module')
@@ -326,6 +329,7 @@ def init():
     cd.register("test", test, may_use=owner_only, rw=True)
     cd.register("truth", truth)
     cd.register("version", version_command)
+    dice.register_commands(cd)
     emotes.register_commands(cd)
     keywords.register_commands(cd)
     wikipedia.register_commands(cd)
@@ -376,8 +380,8 @@ def help_message():
         'Show this help message.'
     ], [
         '{prefix}help `<section>`',
-        'Show the help section for a submodule. Options are `emotes`,'
-        ' `keywords`, and `wolfram alpha`.'
+        'Show the help section for a submodule. Options are `dice`, `emotes`,'
+        ' `keywords`, `wolfram alpha`, and `wiki`.'
     ], [
         '{prefix}addemoji <name> <file or URL>',
         'Add a custom emoji to the Guild. Requires the edit-emoji permission.'
@@ -446,6 +450,8 @@ async def show_help(_client, message):
     _command, argstr = util.split_command(message)
     if argstr is None:
         help_msg = help_message()
+    elif argstr.casefold() == 'dice':
+        help_msg = Dice.help()
     elif argstr.casefold() == 'emotes':
         help_msg = Emotes.help()
     elif argstr.casefold() == 'keywords':
