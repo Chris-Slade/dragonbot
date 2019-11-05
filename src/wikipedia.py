@@ -59,9 +59,11 @@ class Wikipedia():
                         for page in json['query']['pages'].values():
                             title = page['title']
                             extract = page['extract'].replace('\n', '\n\n')
+                            url = page['fullurl']
                             await message.channel.send(
                                 embed=discord.Embed(
                                     title=title,
+                                    url=url,
                                     description=util.truncate(
                                         extract,
                                         constants.MAX_EMBED_DESC_SIZE
@@ -78,7 +80,8 @@ class Wikipedia():
         query_params = urllib.parse.urlencode({
             'format': 'json',
             'action': 'query',
-            'prop': 'extracts',
+            'prop': 'extracts|info',
+            'inprop': 'url',
             'exintro': '',
             'explaintext': '',
             'redirects': 1,
