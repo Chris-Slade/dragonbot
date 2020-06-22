@@ -71,9 +71,9 @@ class Emotes():
             cd -- The CommandDispatcher to register with.
         """
         cd.register("emotes",        self.list_emotes)
-        cd.register("addemote",      self.add_emote,      rw=True)
-        cd.register("deleteemote",   self.remove_emote,   rw=True)
-        cd.register("removeemote",   self.remove_emote,   rw=True)
+        cd.register("addemote",      self.add_emote,      rw=True, may_use={config.owner_id})
+        cd.register("deleteemote",   self.remove_emote,   rw=True, may_use={config.owner_id})
+        cd.register("removeemote",   self.remove_emote,   rw=True, may_use={config.owner_id})
         cd.register("refreshemotes", self.refresh_emotes, may_use={config.owner_id})
         self.logger.info('Registered commands')
 

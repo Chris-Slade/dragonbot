@@ -61,9 +61,9 @@ class Keywords():
         )
 
     def register_commands(self, cd):
-        cd.register("addkeyword",    self.add_keyword,    rw=True)
-        cd.register("deletekeyword", self.remove_keyword, rw=True)
-        cd.register("removekeyword", self.remove_keyword, rw=True)
+        cd.register("addkeyword",    self.add_keyword,    rw=True, may_use={config.owner_id})
+        cd.register("deletekeyword", self.remove_keyword, rw=True, may_use={config.owner_id})
+        cd.register("removekeyword", self.remove_keyword, rw=True, may_use={config.owner_id})
         cd.register("keywords",      self.list_keywords)
         cd.register("count",         self.show_count)
         cd.register("refreshkeywords", self.refresh_keywords, may_use={config.owner_id})
