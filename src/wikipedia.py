@@ -1,5 +1,4 @@
 from util import command_method
-import aiohttp
 import constants
 import discord
 import logging
@@ -76,7 +75,7 @@ class Wikipedia():
             self.logger.exception('Unknown error')
             await message.channel.send('Unknown error.')
 
-    async def make_request(self, query, api):
+    async def make_request(self, query):
         query_params = urllib.parse.urlencode({
             'format': 'json',
             'action': 'query',

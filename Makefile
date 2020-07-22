@@ -1,5 +1,6 @@
 PY := python3.7
 SRC := $(filter %.py, $(shell git ls-files))
+ENV := pipenv run
 
 .PHONY: compile test lint run tags deploy logs
 
@@ -10,16 +11,22 @@ test:
 	PYTHONPATH=src $(PY) -m unittest discover -s test -v
 
 lint:
-	prospector
+	$(ENV) prospector
 
 run:
-	heroku local
+	$(ENV) heroku local
 
 tags: $(SRC)
 	ctags $(SRC)
 
 deploy:
 	git push heroku master
+
+stop:
+	heroku ps:scale worker=0
+
+start:
+	heroku ps:scale worker=1
 
 logs:
 	heroku logs

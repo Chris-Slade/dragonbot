@@ -22,13 +22,14 @@ from insult import get_insult
 from keywords import Keywords
 from storage import storage_injector
 from util import split_command, split_command_clean, command, server_command
+from magic8ball import Magic8Ball
 from wikipedia import Wikipedia
 from wolfram_alpha import WolframAlpha
 import config
 import constants
 import util
 
-__version__ = '4.0.1'
+__version__ = '4.1.0'
 
 ### ARGUMENTS ###
 
@@ -309,6 +310,8 @@ def init():
     emotes = Emotes()
     logger.info('Initializing Keywords module')
     keywords = Keywords()
+    logger.info('Initializing Magic 8-Ball module')
+    eightball = Magic8Ball()
     logger.info('Initializing Wolfram Alpha module')
     wolfram = WolframAlpha()
     logger.info('Initializing Wikipedia module')
@@ -332,6 +335,7 @@ def init():
     dice.register_commands(cd)
     emotes.register_commands(cd)
     keywords.register_commands(cd)
+    eightball.register_commands(cd)
     wikipedia.register_commands(cd)
     wolfram.register_commands(cd)
     command_dispatcher = cd # Make global
