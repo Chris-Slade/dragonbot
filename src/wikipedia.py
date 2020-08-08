@@ -37,7 +37,7 @@ class Wikipedia():
         _command, arg = util.split_command(message)
         try:
             async with message.channel.typing():
-                url = await self.make_request(arg, constants.WIKIPEDIA_API_URL)
+                url = await self.make_request(arg)
                 client = await util.get_http_client()
                 rsp = await client.get(url)
                 if 400 <= rsp.status <= 599:
