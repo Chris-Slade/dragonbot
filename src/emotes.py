@@ -168,14 +168,8 @@ class Emotes():
         emote = message.clean_content[1:]
         server_emotes = self._get_server_emotes(message.guild.id)
         if emote in server_emotes:
-            if util.is_embeddable_image_url(server_emotes[emote]):
-                self.logger.debug('Detected image emote "%s"; posting as embed')
-                await message.channel.send(
-                    embed=discord.Embed().set_image(url=server_emotes[emote])
-                )
-            else:
-                self.logger.debug('Posting emote "%s"', server_emotes[emote])
-                await message.channel.send(server_emotes[emote])
+            self.logger.debug('Posting emote "%s"', server_emotes[emote])
+            await message.channel.send(server_emotes[emote])
         else:
             self.logger.debug('Unknown emote')
             if constants.IDK_REACTION is not None:
