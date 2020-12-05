@@ -10,6 +10,23 @@ COMMAND_PREFIX = '!'
 EMOTE_PREFIX = '@'
 # Default insult for when no insults file is provided
 DEFAULT_INSULT = 'you dummy'
+# Special numbers for "gets"
+SPECIAL_NUMBERS = (
+    123,
+    1234,
+    12345,
+    123456,
+    1234567,
+    12345678,
+    123456789,
+    420,
+    42069,
+    69,
+    69420,
+    6969,
+    696969,
+    69696969,
+)
 # Default color for embeds created by the bot
 EMBED_COLOR = 0xFF00FF
 # Magic 8-Ball answers

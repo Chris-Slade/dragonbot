@@ -59,7 +59,7 @@ def _split_command_helper(content):
     return command, argstr
 
 def is_get(number):
-    if number in (123, 1234, 12345, 123456, 1234567, 12345678, 123456789):
+    if number in constants.SPECIAL_NUMBERS:
         return True
     count = str(number)
     if len(count) >= 2 and count[-1] == count[-2]:
