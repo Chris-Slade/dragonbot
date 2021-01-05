@@ -23,13 +23,14 @@ from keywords import Keywords
 from storage import storage_injector
 from util import split_command, split_command_clean, command, server_command
 from magic8ball import Magic8Ball
+from urban_dictionary import UrbanDictionary
 from wikipedia import Wikipedia
 from wolfram_alpha import WolframAlpha
 import config
 import constants
 import util
 
-__version__ = '4.1.3'
+__version__ = '4.2.0'
 
 ### ARGUMENTS ###
 
@@ -48,6 +49,8 @@ def getopts():
         'storage_dir'      : 'DRAGONBOT_STORAGE_DIR',
         'token'            : 'DRAGONBOT_TOKEN',
         'unknown_cmd_msg'  : 'DRAGONBOT_UNKNOWN_CMD_MSG',
+        'rapidapi_key'     : 'DRAGONBOT_RAPIDAPI_KEY',
+        'rapidapi_host'    : 'DRAGONBOT_RAPIDAPI_HOST',
         'wolfram_app_id'   : 'DRAGONBOT_WOLFRAM_APP_ID',
     }
     defaults = {
@@ -63,6 +66,8 @@ def getopts():
         'storage_dir'  : os.environ.get(env_opts['storage_dir']),
         'token'        : os.environ.get(env_opts['token']),
         'unknown_cmd_msg' : os.environ.get(env_opts['unknown_cmd_msg']) == 'True',
+        'rapidapi_key' : os.environ.get(env_opts['rapidapi_key']),
+        'rapidapi_host' : os.environ.get(env_opts['rapidapi_host']),
         'wolfram_app_id' : os.environ.get(env_opts['wolfram_app_id']),
     }
 
@@ -172,6 +177,16 @@ def getopts():
         '--version',
         action='store_true',
         help='Print the version of the bot and the discord.py API and exit.'
+    )
+    parser.add_argument(
+        '--rapidapi-key',
+        type=str,
+        help='API key for RapidAPI.'
+    )
+    parser.add_argument(
+        '--rapidapi-host',
+        type=str,
+        help='Host URL for RapidAPI.'
     )
     parser.add_argument(
         '--wolfram-app-id',
@@ -289,6 +304,9 @@ def init():
             logger.warning(e)
     signal.signal(signal.SIGUSR1, restart)
 
+    if config.read_only:
+        logger.info('Running in read-only mode')
+
     # Initialize storage directory if needed
     if config.storage_dir:
         logger.info('Creating storage directory %s', config.storage_dir)
@@ -312,6 +330,8 @@ def init():
     keywords = Keywords()
     logger.info('Initializing Magic 8-Ball module')
     eightball = Magic8Ball()
+    logger.info('Initializing Urban Dictionary module')
+    urbandictionary = UrbanDictionary()
     logger.info('Initializing Wolfram Alpha module')
     wolfram = WolframAlpha()
     logger.info('Initializing Wikipedia module')
@@ -336,6 +356,7 @@ def init():
     emotes.register_commands(cd)
     keywords.register_commands(cd)
     eightball.register_commands(cd)
+    urbandictionary.register_commands(cd)
     wikipedia.register_commands(cd)
     wolfram.register_commands(cd)
     command_dispatcher = cd # Make global
@@ -385,7 +406,7 @@ def help_message():
     ], [
         '{prefix}help `<section>`',
         'Show the help section for a submodule. Options are `dice`, `emotes`,'
-        ' `keywords`, `wolfram alpha`, and `wiki`.'
+        ' `keywords`, `urban dictionary`, `wolfram alpha`, and `wiki`.'
     ], [
         '{prefix}addemoji <name> <file or URL>',
         'Add a custom emoji to the Guild. Requires the edit-emoji permission.'
@@ -460,6 +481,8 @@ async def show_help(_client, message):
         help_msg = Emotes.help()
     elif argstr.casefold() == 'keywords':
         help_msg = Keywords.help()
+    elif argstr.casefold() == 'urban dictionary':
+        help_msg = UrbanDictionary.help()
     elif argstr.casefold() in ('wolfram', 'wolfram alpha'):
         help_msg = WolframAlpha.help()
     elif argstr.casefold() in ('wiki', 'wikipedia'):

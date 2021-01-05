@@ -65,6 +65,7 @@ EMBEDDABLE_IMAGE_SCHEMES = ('http', 'https')
 EMBEDDABLE_IMAGE_EXTS = (
     '.jpg', '.jpeg', '.gif', '.png', '.webp', '.bmp', '.tiff'
 )
+UD_API_URL = "https://mashape-community-urban-dictionary.p.rapidapi.com/define"
 WOLFRAM_API_URL = 'http://api.wolframalpha.com'
 WOLFRAM_SIMPLE = '/v2/simple'
 WOLFRAM_SHORT = '/v1/result'
