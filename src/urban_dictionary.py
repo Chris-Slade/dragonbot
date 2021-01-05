@@ -12,6 +12,7 @@ class UrbanDictionary():
 
     def __init__(self):
         self.logger = logging.getLogger('dragonbot.' + __name__)
+        self.strip_brackets = str.maketrans({ "[" : None, "]" : None })
 
     def register_commands(self, cd):
         """Register this modules's commands with a CommandDispatcher.
@@ -66,12 +67,18 @@ class UrbanDictionary():
                             'No results.'
                         )
                     else:
-                        result = json['list'][0]
+                        result = max(
+                            json['list'],
+                            key=lambda item: \
+                                item['thumbs_up'] - item['thumbs_down']
+                        )
+                        description = result['definition'] \
+                            .translate(self.strip_brackets)
                         await message.channel.send(
                             embed=discord.Embed(
                                 title=result['word'],
                                 url=result['permalink'],
-                                description=result['definition']
+                                description=description,
                             )
                         )
 
