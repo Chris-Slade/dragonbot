@@ -30,7 +30,7 @@ import config
 import constants
 import util
 
-__version__ = '4.2.1'
+__version__ = '4.3.0'
 
 ### ARGUMENTS ###
 

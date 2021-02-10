@@ -1,4 +1,4 @@
-PY := python3.7
+PY := python
 SRC := $(filter %.py, $(shell git ls-files))
 ENV := pipenv run
 
@@ -8,7 +8,7 @@ compile:
 	$(PY) -mpy_compile $(SRC)
 
 test:
-	PYTHONPATH=src $(PY) -m unittest discover -s test -v
+	PYTHONPATH=src $(ENV) $(PY) -m unittest discover -s test -v
 
 lint:
 	$(ENV) prospector

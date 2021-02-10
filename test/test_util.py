@@ -61,5 +61,11 @@ class TestUtil(unittest.TestCase):
         self.assertFalse(t('ftp://example.com/image.png'))
         self.assertFalse(t('invalid'))
 
+    def test_format_url(self):
+        self.assertEqual(
+            'https://example.com?foo=bar&baz=bat',
+            util.format_url('https://example.com', { 'foo': 'bar', 'baz': 'bat' })
+        )
+
 if __name__ == "__main__":
     unittest.main()

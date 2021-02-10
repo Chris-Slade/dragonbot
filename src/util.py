@@ -164,3 +164,7 @@ async def get_http_client():
                 # config.http_client.close()
         atexit.register(close_http_client)
     return config.http_client
+
+def format_url(base_url, params):
+    query_params = urllib.parse.urlencode(params)
+    return '{}?{}'.format(base_url, query_params)
