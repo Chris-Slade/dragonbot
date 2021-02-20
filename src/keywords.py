@@ -39,6 +39,9 @@ class Keywords():
             '{prefix}count `<keyword>`',
             'Show the current count of a given keyword.'
         ], [
+            '{prefix}setcount `<keyword>` `<count>`',
+            'Override the count for a keyword (bot owner only).'
+        ], [
             '{prefix}deletekeyword',
             'Alias for `removekeyword`.'
         ], [
@@ -64,6 +67,7 @@ class Keywords():
         cd.register("addkeyword",    self.add_keyword,    rw=True, may_use={config.owner_id})
         cd.register("deletekeyword", self.remove_keyword, rw=True, may_use={config.owner_id})
         cd.register("removekeyword", self.remove_keyword, rw=True, may_use={config.owner_id})
+        cd.register("setcount",      self.set_count,      rw=True, may_use={config.owner_id})
         cd.register("keywords",      self.list_keywords)
         cd.register("count",         self.show_count)
         cd.register("refreshkeywords", self.refresh_keywords, may_use={config.owner_id})
@@ -224,3 +228,22 @@ class Keywords():
         else:
             if constants.IDK_REACTION is not None:
                 await message.channel.send(constants.IDK_REACTION)
+
+    @server_command_method
+    async def set_count(self, _client, message):
+        server_keywords = self.keywords[message.guild.id]
+        _command, argstr = util.split_command(message)
+        if argstr is None:
+            await message.channel.send('Missing keyword and count.')
+        try:
+            keyword, count = argstr.split()
+            if keyword not in server_keywords:
+                await message.channel.send('Unknown keyword.')
+                return
+            server_keywords[keyword]['count'] = int(count)
+            server_keywords.save()
+            await message.channel.send(f'Set count to {count}.')
+        except ValueError:
+            await message.channel.send(
+                'Invalid argument(s): expected keyword and count.'
+            )
