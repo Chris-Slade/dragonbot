@@ -74,6 +74,8 @@ class UrbanDictionary():
                         )
                         description = result['definition'] \
                             .translate(self.strip_brackets)
+                        if len(description) > 2048:
+                            description = description[0:2045] + '...'
                         await message.channel.send(
                             embed=discord.Embed(
                                 title=result['word'],
