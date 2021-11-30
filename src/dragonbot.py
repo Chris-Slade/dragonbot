@@ -30,7 +30,7 @@ import config
 import constants
 import util
 
-__version__ = '4.4.1'
+__version__ = '4.4.2'
 
 ### ARGUMENTS ###
 
@@ -392,7 +392,7 @@ def main():
 def version():
     """Get a nicely formatted version string."""
     assert '__version__' in globals(), 'No global __version__ variable'
-    return 'DragonBot v{} (discord.py v{}){}{}'.format(
+    return 'DragonBot v{} (py-cord v{}){}{}'.format(
         __version__,
         discord.__version__,
         ' [DEBUG MODE]' if __debug__ else '',
