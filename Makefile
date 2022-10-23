@@ -14,19 +14,7 @@ lint:
 	$(ENV) prospector
 
 run:
-	$(ENV) heroku local
+	$(ENV) python src/dragonbot.py
 
 tags: $(SRC)
 	ctags $(SRC)
-
-deploy:
-	git push heroku master
-
-stop:
-	heroku ps:scale worker=0
-
-start:
-	heroku ps:scale worker=1
-
-logs:
-	heroku logs
