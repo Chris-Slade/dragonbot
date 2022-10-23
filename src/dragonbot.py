@@ -13,6 +13,7 @@ import signal
 import sys
 import time
 
+from dotenv import load_dotenv
 from pymongo import MongoClient
 
 from command_dispatcher import CommandDispatcher
@@ -20,17 +21,17 @@ from dice import Dice
 from emotes import Emotes
 from insult import get_insult
 from keywords import Keywords
-from storage import storage_injector
-from util import split_command, split_command_clean, command, server_command
 from magic8ball import Magic8Ball
+from storage import storage_injector
 from urban_dictionary import UrbanDictionary
+from util import split_command, split_command_clean, command, server_command
 from wikipedia import Wikipedia
 from wolfram_alpha import WolframAlpha
 import config
 import constants
 import util
 
-__version__ = '4.4.2'
+__version__ = '4.5.0'
 
 ### ARGUMENTS ###
 
@@ -265,6 +266,9 @@ def init():
         keywords,           \
         logger,             \
         stats
+
+    # Load environment variables
+    load_dotenv()
 
     # Get options
     getopts()
