@@ -4,7 +4,8 @@ from aiohttp import web
 async def handle_health(request):
     return web.Response(
         status=200,
-        text="<html><head><title>Dragonbot</title></head><body>Healthy</body></html>"
+        content_type='text/html',
+        text="<html><head><title>Dragonbot</title></head><body>Healthy</body></html>",
     )
 
 print('Starting web server')
